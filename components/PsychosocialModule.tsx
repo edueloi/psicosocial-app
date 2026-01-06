@@ -1,150 +1,398 @@
 
-import React from 'react';
-/* Added CheckCircle2 to the imports from lucide-react */
-import { BrainCircuit, MessageSquare, ShieldCheck, TrendingUp, Users, AlertTriangle, ChevronRight, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  BrainCircuit, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, 
+  Users, AlertTriangle, ChevronRight, CheckCircle2, Info, Filter, 
+  Search, Calendar, LayoutGrid, Zap, History, X, Plus, AlertCircle, Clock
+} from 'lucide-react';
+import { IncidentStatus } from '../types';
 
-const PsychosocialModule: React.FC = () => {
+interface PsychosocialProps {
+  vision?: 'tech' | 'exec';
+}
+
+const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) => {
+  const [showSurveyModal, setShowSurveyModal] = useState(false);
+  const [showIncidentModal, setShowIncidentModal] = useState(false);
+
+  const getRiskLabel = (score: number) => {
+    if (score >= 80) return { label: 'Crítico', color: 'bg-rose-100 text-rose-700 border-rose-200' };
+    if (score >= 60) return { label: 'Alto', color: 'bg-rose-50 text-rose-600 border-rose-100' };
+    if (score >= 40) return { label: 'Moderado', color: 'bg-amber-100 text-amber-700 border-amber-200' };
+    return { label: 'Baixo', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
+  };
+
+  const getStatusBadge = (status: IncidentStatus) => {
+    switch(status) {
+      case IncidentStatus.RECEIVED: return 'bg-slate-100 text-slate-600';
+      case IncidentStatus.IN_ANALYSIS: return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+      case IncidentStatus.ACTION_CREATED: return 'bg-amber-50 text-amber-600 border-amber-100';
+      case IncidentStatus.CLOSED: return 'bg-emerald-50 text-emerald-600 border-emerald-100';
+      default: return 'bg-slate-50 text-slate-500';
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Hero Section */}
-      <div className="bg-indigo-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
-        <div className="relative z-10 max-w-2xl">
-          <span className="px-3 py-1 bg-indigo-500/30 rounded-full text-xs font-bold uppercase tracking-widest text-indigo-200 border border-indigo-500/50 mb-4 inline-block">
-            Módulo Exclusivo NR-01
-          </span>
-          <h2 className="text-3xl font-bold mb-4">Gestão de Riscos Psicossociais</h2>
-          <p className="text-indigo-100 text-lg opacity-90 leading-relaxed">
-            Identifique hotspots emocionais e intervenha preventivamente para reduzir absenteísmo e passivos jurídicos.
-          </p>
-          <div className="mt-8 flex gap-4">
-            <button className="px-6 py-3 bg-white text-indigo-900 font-bold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg">
-              Aplicar Nova Pesquisa
-            </button>
-            <button className="px-6 py-3 bg-indigo-800 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors border border-indigo-700">
-              Heatmap por Setor
-            </button>
-          </div>
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+      {/* Module Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Gestão de Riscos Psicossociais</h2>
+          <p className="text-slate-500 text-sm font-medium italic">Diagnóstico e intervenção preventiva baseada na NR-01.</p>
         </div>
-        <BrainCircuit size={300} className="absolute top-1/2 -right-20 -translate-y-1/2 text-white/5 pointer-events-none" />
+        <div className="flex flex-wrap items-center gap-3">
+          <button 
+            onClick={() => setShowIncidentModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-200"
+          >
+            <AlertCircle size={16} />
+            Relatar Incidente
+          </button>
+          <button 
+            onClick={() => setShowSurveyModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 transition-all border border-indigo-500"
+          >
+            <Plus size={16} />
+            Nova Pesquisa
+          </button>
+        </div>
       </div>
 
+      {/* Global Filters */}
+      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
+        <div className="flex-1 min-w-[200px] relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input 
+            type="text" 
+            placeholder="Filtrar por setor ou unidade..." 
+            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/10"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase">
+            <option>Unidade</option>
+            <option>Planta Norte</option>
+            <option>Escritório Central</option>
+          </select>
+          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase">
+            <option>Período: 2024</option>
+            <option>Período: 2023</option>
+          </select>
+          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase">
+            <option>Fonte: Todas</option>
+            <option>Pesquisas</option>
+            <option>Relatos</option>
+            <option>Indicadores</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Hero Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Heatmap/Stats Card */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
+        {/* Heatmap/Risk Card */}
+        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm p-8 flex flex-col">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="font-bold text-slate-800 text-lg">Mapa de Risco Emocional (Heatmap)</h3>
-            <span className="text-xs text-slate-400 italic">Atualizado hoje às 09:00</span>
-          </div>
-          
-          <div className="space-y-6">
-            {[
-              { label: 'Setor Comercial', risk: 85, trend: '+12%', color: 'bg-rose-500' },
-              { label: 'Produção Industrial', risk: 42, trend: '-5%', color: 'bg-amber-500' },
-              { label: 'Administrativo', risk: 18, trend: 'Estável', color: 'bg-emerald-500' },
-              { label: 'Logística', risk: 65, trend: '+2%', color: 'bg-rose-400' },
-            ].map((sector, i) => (
-              <div key={i} className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="font-bold text-slate-700">{sector.label}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase">{sector.trend}</span>
-                    <span className="font-black text-slate-800">{sector.risk}/100</span>
+            <div>
+              <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+                Mapa de Risco Psicossocial por Setor
+                <div className="group relative">
+                  <Info size={14} className="text-slate-300 cursor-help" />
+                  <div className="absolute left-0 bottom-full mb-2 w-64 bg-slate-900 text-white text-[10px] p-3 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none shadow-2xl">
+                    Baseado em: Pesquisa Psicossocial (Likert), Volume de Relatos, Taxas de Absenteísmo e Turnover. Classificação conforme matriz de risco NR-01.
                   </div>
                 </div>
-                <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${sector.color} transition-all duration-1000`} style={{ width: `${sector.risk}%` }}></div>
+              </h3>
+              <p className="text-xs text-slate-400 font-medium">Classificação técnica de exposição organizacional</p>
+            </div>
+            <div className="flex gap-2">
+               <span className="px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-black uppercase rounded-lg border border-rose-100">02 Setores em Atenção</span>
+            </div>
+          </div>
+          
+          <div className="space-y-8 flex-1">
+            {[
+              { label: 'Setor Comercial', score: 85, source: 'Pesquisa + Relatos', trend: 'up' },
+              { label: 'Produção Industrial', score: 62, source: 'Indicadores', trend: 'down' },
+              { label: 'Logística', score: 45, source: 'Pesquisa', trend: 'stable' },
+              { label: 'Administrativo', score: 18, source: 'Pesquisa', trend: 'down' },
+            ].map((sector, i) => {
+              const risk = getRiskLabel(sector.score);
+              return (
+                <div key={i} className="space-y-3 group/row">
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <span className="text-sm font-black text-slate-800">{sector.label}</span>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Fonte principal: {sector.source}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border mb-1 inline-block ${risk.color}`}>
+                        {risk.label}
+                      </span>
+                      <div className="flex items-center gap-2 justify-end">
+                        {sector.trend === 'up' && <TrendingUp size={12} className="text-rose-500" />}
+                        {sector.trend === 'down' && <TrendingDown size={12} className="text-emerald-500" />}
+                        <span className="font-black text-slate-800 text-base">{sector.score}<span className="text-slate-300 text-[10px]">/100</span></span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        sector.score >= 80 ? 'bg-rose-600' : sector.score >= 60 ? 'bg-rose-400' : sector.score >= 40 ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`} 
+                      style={{ width: `${sector.score}%` }}
+                    ></div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          <div className="mt-8 pt-8 border-t border-slate-50 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div className="mt-10 pt-8 border-t border-slate-50 grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
-              <p className="text-2xl font-black text-slate-800">4.2</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Absenteísmo</p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-2xl font-black text-slate-800">4.2</p>
+                <TrendingUp size={14} className="text-rose-500" />
+              </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Absenteísmo (%)</p>
             </div>
             <div>
-              <p className="text-2xl font-black text-emerald-500">82%</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Engajamento</p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-2xl font-black text-emerald-500">82%</p>
+                <TrendingUp size={14} className="text-emerald-500" />
+              </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Engajamento</p>
             </div>
             <div>
-              <p className="text-2xl font-black text-rose-500">12%</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Rotatividade</p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-2xl font-black text-rose-500">12%</p>
+                <TrendingDown size={14} className="text-rose-500" />
+              </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rotatividade</p>
             </div>
             <div>
-              <p className="text-2xl font-black text-indigo-500">15</p>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">Ações de Bem-estar</p>
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-2xl font-black text-indigo-500">15</p>
+                <span className="text-[10px] font-bold text-slate-400">+3</span>
+              </div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações PGR Ativas</p>
             </div>
           </div>
         </div>
 
         {/* Incident Center */}
-        <div className="lg:col-span-1 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col">
+        <div className="lg:col-span-1 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
           <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <h3 className="font-black text-slate-800 text-sm flex items-center gap-2 uppercase tracking-widest">
               <MessageSquare size={18} className="text-indigo-600" />
-              Central de Incidentes
+              Relatos e Incidentes
             </h3>
-            <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-2 py-0.5 rounded-full">2 NOVOS</span>
+            <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-3 py-1 rounded-full shadow-sm">02 Críticos</span>
           </div>
-          <div className="flex-1 overflow-y-auto max-h-[400px]">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {[
-              { id: 'rel-1', type: 'Sobrecarga', date: 'Hoje', urgency: 'Alta', status: 'Em Análise' },
-              { id: 'rel-2', type: 'Conflito Liderança', date: 'Ontem', urgency: 'Média', status: 'Ação Criada' },
-              { id: 'rel-3', type: 'Assédio (Relato)', date: '3 dias atrás', urgency: 'Crítica', status: 'Em Apuração' },
+              { id: 'rel-1', type: 'Sobrecarga de Trabalho', date: 'Hoje', status: IncidentStatus.IN_ANALYSIS, sector: 'Comercial', urgent: true },
+              { id: 'rel-2', type: 'Conflito Interpessoal', date: 'Ontem', status: IncidentStatus.ACTION_CREATED, sector: 'Logística', urgent: false },
+              { id: 'rel-3', type: 'Assédio Moral (Relato)', date: '3 dias atrás', status: IncidentStatus.IN_ANALYSIS, sector: 'Produção', urgent: true },
+              { id: 'rel-4', type: 'Feedback de Clima Negativo', date: 'Semana passada', status: IncidentStatus.CLOSED, sector: 'RH', urgent: false },
             ].map((rel, i) => (
-              <div key={i} className="p-5 border-b border-slate-50 hover:bg-slate-50 transition-all cursor-pointer group">
-                <div className="flex justify-between items-start mb-2">
-                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
-                    rel.urgency === 'Crítica' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {rel.urgency}
+              <div key={i} className="p-6 border-b border-slate-50 hover:bg-slate-50/50 transition-all cursor-pointer group relative">
+                {rel.urgent && <div className="absolute left-0 top-6 bottom-6 w-1 bg-rose-500 rounded-r"></div>}
+                <div className="flex justify-between items-start mb-3">
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${getStatusBadge(rel.status)}`}>
+                    {rel.status}
                   </span>
                   <span className="text-[10px] text-slate-400 font-bold uppercase">{rel.date}</span>
                 </div>
-                <h4 className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">{rel.type}</h4>
-                <div className="flex items-center justify-between mt-3">
-                  <span className="text-xs text-slate-500 font-medium">{rel.status}</span>
-                  <ChevronRight size={14} className="text-slate-300" />
+                <h4 className="font-black text-slate-800 text-sm mb-1 group-hover:text-indigo-600 transition-colors">{rel.type}</h4>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mb-3">Setor: {rel.sector}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex -space-x-1">
+                    <div className="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-black text-slate-500">RT</div>
+                  </div>
+                  <button className="text-[10px] font-black text-indigo-500 uppercase flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Analisar <ChevronRight size={12} />
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-          <button className="p-4 text-center text-xs font-bold text-indigo-600 uppercase tracking-widest hover:bg-indigo-50 transition-colors border-t border-slate-100">
-            Gerenciar Todos os Relatos
+          <button className="p-5 text-center text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:bg-indigo-50 transition-colors border-t border-slate-100">
+            Gerenciar Todos os Incidentes
           </button>
         </div>
       </div>
 
-      {/* Intervention Trails */}
+      {/* Intervention Trails & Blindagem */}
       <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-8">
-        <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-          <ShieldCheck size={20} className="text-emerald-500" />
-          Trilhas de Intervenção Sugeridas pelo Sistema
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 hover:border-indigo-200 transition-all">
-            <p className="text-xs font-black text-indigo-500 uppercase mb-2">Sugestão p/ Setor Comercial</p>
-            <h4 className="font-bold text-slate-800 mb-4">Ajuste de Fluxo de Trabalho e Metas</h4>
-            <ul className="space-y-2 text-sm text-slate-600 mb-6">
-              <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> Workshop de Resiliência</li>
-              <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> Revisão do limite de jornada</li>
-              <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-emerald-500" /> Canal de feedback anônimo</li>
-            </ul>
-            <button className="w-full py-2.5 bg-indigo-600 text-white rounded-xl font-bold text-sm shadow-md shadow-indigo-600/20 hover:bg-indigo-700 transition-all">
-              Ativar Plano de Ação
-            </button>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
+              <ShieldCheck size={20} className="text-emerald-500" />
+              Intervenções Sugeridas (Compliance NR-01)
+            </h3>
+            <p className="text-xs text-slate-400 font-medium italic">Sugestões automatizadas para suporte à decisão do responsável técnico.</p>
           </div>
-          <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100">
-            <p className="text-xs font-black text-rose-500 uppercase mb-2">Alerta Preventivo</p>
-            <h4 className="font-bold text-slate-800 mb-4">Treinamento de Gestão Emocional para Líderes</h4>
-            <p className="text-sm text-slate-500 mb-6">Identificamos que 40% dos relatos do setor industrial mencionam falta de apoio da supervisão imediata.</p>
-            <button className="w-full py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all">
-              Agendar Treinamento
-            </button>
+          <span className="px-4 py-1.5 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase rounded-xl border border-indigo-100 flex items-center gap-2">
+            <Zap size={14} /> Ativação em 1 Clique
+          </span>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="p-8 bg-slate-50 rounded-[32px] border border-slate-100 hover:border-indigo-200 hover:bg-white transition-all group shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+               <span className="px-3 py-1 bg-indigo-500 text-white text-[9px] font-black uppercase rounded-lg shadow-sm">Urgência: Alta</span>
+               <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Hotspot: Setor Comercial</p>
+            </div>
+            <h4 className="text-xl font-black text-slate-800 mb-4 group-hover:text-indigo-600 transition-colors">Reestruturação de Metas e Jornada</h4>
+            <div className="space-y-3 mb-8">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-slate-600 font-medium">Implantar política de desconexão fora do horário</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-slate-600 font-medium">Revisão do escalonamento de metas (Modelo Likert)</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-slate-600 font-medium">Workshop de Gestão de Conflitos para Líderes</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+                <Plus size={16} /> Vincular ao PGR
+              </button>
+            </div>
+          </div>
+
+          <div className="p-8 bg-slate-50 rounded-[32px] border border-slate-100 hover:border-indigo-200 hover:bg-white transition-all group shadow-sm">
+            <div className="flex justify-between items-start mb-4">
+               <span className="px-3 py-1 bg-amber-500 text-white text-[9px] font-black uppercase rounded-lg shadow-sm">Prevenção</span>
+               <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Alerta: Liderança Produção</p>
+            </div>
+            <h4 className="text-xl font-black text-slate-800 mb-4 group-hover:text-indigo-600 transition-colors">Programa de Apoio Psicológico</h4>
+            <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8">
+              Detectamos que 40% dos colaboradores da produção sentem baixo suporte da liderança. Sugerimos trilha de escuta ativa e canal de suporte individual.
+            </p>
+            <div className="flex gap-3">
+              <button className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
+                Agendar Treinamento
+              </button>
+              <button className="px-6 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
+                Ver Laudo
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Survey Modal Placeholder */}
+      {showSurveyModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div className="p-6 bg-indigo-600 text-white flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <BrainCircuit size={24} />
+                <h3 className="text-xl font-black uppercase tracking-tight">Nova Pesquisa Psicossocial</h3>
+              </div>
+              <button onClick={() => setShowSurveyModal(false)} className="hover:rotate-90 transition-transform">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Tipo de Avaliação</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                    <option>Diagnóstico de Clima Organizacional</option>
+                    <option>Avaliação de Carga Mental de Trabalho</option>
+                    <option>Pesquisa de Qualidade de Liderança</option>
+                    <option>Triagem de Riscos de Assédio</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Unidades/Setores Alvo</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                    <option>Toda a Empresa</option>
+                    <option>Planta Norte - Somente Produção</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                  <ShieldCheck size={20} className="text-indigo-600 shrink-0" />
+                  <p className="text-[10px] text-indigo-900 font-bold uppercase leading-relaxed">
+                    Pesquisa será realizada de forma <span className="underline">Totalmente Anônima</span> conforme diretrizes de ética e LGPD.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button onClick={() => setShowSurveyModal(false)} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => setShowSurveyModal(false)}
+                  className="flex-1 px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
+                >
+                  Iniciar Coleta
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Incident Modal Placeholder */}
+      {showIncidentModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div className="p-6 bg-rose-600 text-white flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <AlertCircle size={24} />
+                <h3 className="text-xl font-black uppercase tracking-tight">Registro de Incidente</h3>
+              </div>
+              <button onClick={() => setShowIncidentModal(false)} className="hover:rotate-90 transition-transform">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-8 space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Natureza do Relato</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                    <option>Sobrecarga de Trabalho / Stress</option>
+                    <option>Conflito Interpessoal / Gestão</option>
+                    <option>Indício de Assédio Moral</option>
+                    <option>Esgotamento (Near Burnout)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Setor Afetado</label>
+                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                    <option>Comercial</option>
+                    <option>Logística</option>
+                    <option>Produção</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Fatos Observados</label>
+                  <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium outline-none h-24 resize-none" placeholder="Relato técnico dos fatos..." />
+                </div>
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button onClick={() => setShowIncidentModal(false)} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => setShowIncidentModal(false)}
+                  className="flex-1 px-8 py-4 bg-rose-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-rose-700 shadow-xl shadow-rose-200 transition-all"
+                >
+                  Registrar Evento
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

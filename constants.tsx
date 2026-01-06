@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { LayoutDashboard, ShieldAlert, ClipboardList, Users, FileText, BrainCircuit, Building2, History, ShieldCheck } from 'lucide-react';
-import { UserRole, Tenant, User, ActionStatus } from './types';
+import { UserRole, Tenant, User, ActionStatus, UserStatus } from './types';
 
 export const MOCK_TENANTS: Tenant[] = [
   { 
@@ -23,9 +23,51 @@ export const MOCK_TENANTS: Tenant[] = [
 ];
 
 export const MOCK_USERS: User[] = [
-  { id: 'u1', name: 'Admin Master', email: 'admin@laboral.com', role: UserRole.TENANT_ADMIN, tenantId: 't1' },
-  { id: 'u2', name: 'Dr. Roberto SST', email: 'roberto@sst.com', role: UserRole.SST_CONSULTANT, tenantId: 't1' },
-  { id: 'u3', name: 'Ana RH', email: 'ana@rh.com', role: UserRole.RH_MANAGER, tenantId: 't1' }
+  { 
+    id: 'u1', 
+    name: 'Admin Master', 
+    email: 'admin@laboral.com', 
+    role: UserRole.TENANT_ADMIN, 
+    status: UserStatus.ACTIVE, 
+    tenantId: 't1', 
+    psychosocialAccess: true,
+    lastAccess: '2024-05-20T10:30:00Z',
+    lastIp: '187.12.44.102',
+    device: 'MacBook Pro / Chrome'
+  },
+  { 
+    id: 'u2', 
+    name: 'Dr. Roberto SST', 
+    email: 'roberto@sst.com', 
+    role: UserRole.SST_CONSULTANT, 
+    status: UserStatus.ACTIVE, 
+    tenantId: 't1', 
+    psychosocialAccess: true,
+    lastAccess: '2024-05-20T09:15:00Z',
+    lastIp: '187.12.44.105',
+    device: 'Dell Latitude / Edge'
+  },
+  { 
+    id: 'u3', 
+    name: 'Ana RH', 
+    email: 'ana@rh.com', 
+    role: UserRole.RH_MANAGER, 
+    status: UserStatus.ACTIVE, 
+    tenantId: 't1', 
+    psychosocialAccess: true,
+    lastAccess: '2024-05-19T16:45:00Z',
+    lastIp: '189.44.12.33',
+    device: 'iPhone 15 / Safari'
+  },
+  { 
+    id: 'u4', 
+    name: 'Carlos Fiscal', 
+    email: 'carlos@auditoria.com', 
+    role: UserRole.AUDITOR, 
+    status: UserStatus.PENDING, 
+    tenantId: 't1', 
+    psychosocialAccess: false 
+  }
 ];
 
 export const NAV_ITEMS = [
