@@ -1,0 +1,7 @@
+{
+  "name": "NR01-Master: Sistema de Gestão de Riscos e PGR",
+  "description": "Uma plataforma SaaS multi-tenant avançada para conformidade com a NR-01, com foco especial em gestão de riscos psicossociais, inventário de riscos dinâmico e planos de ação automatizados.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
