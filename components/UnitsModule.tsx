@@ -5,7 +5,7 @@ import {
   MapPin, MoreVertical, Search, Filter, User, Calendar, 
   ShieldAlert, AlertTriangle, CheckCircle2, X, Archive, 
   Settings2, LayoutGrid, Info, Eye, ExternalLink, History,
-  ShieldCheck
+  ShieldCheck, BrainCircuit, Activity, ClipboardList
 } from 'lucide-react';
 import { Unit, Sector } from '../types';
 
@@ -100,6 +100,8 @@ const STATUS_COLORS = {
 
 const UnitsModule: React.FC = () => {
   const [showUnitModal, setShowUnitModal] = useState(false);
+  const [showSectorModal, setShowSectorModal] = useState(false);
+  const [targetUnitId, setTargetUnitId] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
 
@@ -109,6 +111,11 @@ const UnitsModule: React.FC = () => {
     { label: 'Colaboradores', value: MOCK_STRUCTURE.reduce((acc, u) => acc + u.sectors.reduce((sAcc, s) => sAcc + s.employees, 0), 0), icon: <Users size={16}/>, color: 'text-slate-600' },
     { label: 'Setores Críticos', value: MOCK_STRUCTURE.reduce((acc, u) => acc + u.sectors.filter(s => s.hasCriticalRisk).length, 0), icon: <ShieldAlert size={16}/>, color: 'text-rose-600' },
   ];
+
+  const handleOpenSectorModal = (unitId: string) => {
+    setTargetUnitId(unitId);
+    setShowSectorModal(true);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
@@ -202,7 +209,10 @@ const UnitsModule: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-3">
-                <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 shadow-sm transition-all">
+                <button 
+                  onClick={() => handleOpenSectorModal(unit.id)}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 shadow-sm transition-all"
+                >
                   <Plus size={16} className="text-indigo-600" /> Adicionar Setor
                 </button>
                 <div className="relative">
@@ -323,7 +333,10 @@ const UnitsModule: React.FC = () => {
                 ))}
                 
                 {/* Empty State / Add Sector Card */}
-                <button className="p-8 rounded-[32px] border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all flex flex-col items-center justify-center gap-4 group">
+                <button 
+                  onClick={() => handleOpenSectorModal(unit.id)}
+                  className="p-8 rounded-[32px] border-2 border-dashed border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/30 transition-all flex flex-col items-center justify-center gap-4 group"
+                >
                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-sm">
                       <Plus size={32} />
                    </div>
@@ -401,6 +414,183 @@ const UnitsModule: React.FC = () => {
                   className="flex-1 px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
                 >
                   Confirmar Cadastro
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Sector Modal - THE COMPREHENSIVE FORM */}
+      {showSectorModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[40px] w-full max-w-3xl max-h-[90vh] shadow-2xl overflow-hidden animate-in zoom-in duration-300 flex flex-col">
+            <div className="p-8 bg-indigo-600 text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center">
+                  <LayoutGrid size={28} />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-black uppercase tracking-tight leading-none">Novo Setor Técnico</h3>
+                  <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest opacity-80 mt-2">Vinculação Hierárquica e Mapeamento NR-01</p>
+                </div>
+              </div>
+              <button onClick={() => setShowSectorModal(false)} className="hover:rotate-90 transition-transform p-2 bg-white/10 rounded-xl">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-10 space-y-8 overflow-y-auto custom-scrollbar">
+              {/* Section 1: Identification */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-2">
+                  <Info size={16} className="text-indigo-500" />
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Identificação e Responsabilidade</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Nome do Setor / Área</label>
+                    <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Ex: Produção de Usinagem B" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Status Operacional</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
+                      <option>Ativo</option>
+                      <option>Em Reestruturação</option>
+                      <option>Inativo (Somente Histórico)</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Gestor Responsável (Local)</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
+                      <option>Selecione um gestor disponível...</option>
+                      <option>Marco Silva</option>
+                      <option>Carla Dias</option>
+                      <option>Júlio Neves</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Unidade Vinculada</label>
+                    <div className="w-full bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-400 cursor-not-allowed">
+                       {MOCK_STRUCTURE.find(u => u.id === targetUnitId)?.name || 'Nenhuma'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Activity & Employees */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-2">
+                  <Activity size={16} className="text-indigo-500" />
+                  <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Caracterização e Efetivo</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Tipo de Atividade Predominante</label>
+                    <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
+                      <option>Industrial / Operacional</option>
+                      <option>Administrativa / Escritório</option>
+                      <option>Logística / Armazenagem</option>
+                      <option>Manutenção / Técnica</option>
+                      <option>Comercial / Vendas</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Nº de Colaboradores</label>
+                      <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Tipo de Vínculo</label>
+                      <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
+                        <option>CLT Próprio</option>
+                        <option>Terceirizado</option>
+                        <option>Misto (CLT + Terc)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Descrição da Atividade (Resumo PGR)</label>
+                    <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium outline-none h-24 resize-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Descreva as principais tarefas e funções executadas nesta área para fins de inventário..." />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Risks & Governance */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-slate-100 pb-2">
+                    <Shield size={16} className="text-indigo-500" />
+                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Riscos Presumidos</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {['Físico', 'Químico', 'Biológico', 'Ergonômico', 'Psicossocial', 'Acidente'].map(risk => (
+                      <label key={risk} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-xl cursor-pointer hover:bg-white hover:border-indigo-200 transition-all group">
+                        <input type="checkbox" className="w-4 h-4 rounded-md text-indigo-600 focus:ring-indigo-500 border-slate-300" />
+                        <span className="text-[10px] font-black text-slate-600 group-hover:text-indigo-600 uppercase tracking-tighter">{risk}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 border-b border-slate-100 pb-2">
+                    <History size={16} className="text-indigo-500" />
+                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest">Governança NR-01</h4>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Periodicidade de Revisão</label>
+                      <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
+                        <option>Anual (Padrão)</option>
+                        <option>Semestral (Ativ. Crítica)</option>
+                        <option>Trimestral (Ativ. de Risco Elevado)</option>
+                        <option>Bienal (ME/EPP)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Data Base Primeira Avaliação</label>
+                      <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Psychosocial Integration */}
+              <div className="p-8 bg-indigo-50 rounded-[32px] border border-indigo-100 flex flex-col md:flex-row items-center justify-between gap-6 group/psy">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-rose-500 border border-indigo-100 group-hover/psy:scale-110 transition-transform shadow-sm">
+                    <BrainCircuit size={28} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-black text-indigo-900 uppercase">Módulo Psicossocial Ativo</h4>
+                    <p className="text-[10px] text-indigo-600 font-bold uppercase mt-1 leading-relaxed">Incluir este setor automaticamente nas pesquisas de clima e gestão de stress?</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                   <div className="text-right">
+                      <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Frequência</p>
+                      <select className="bg-white border border-indigo-200 rounded-lg px-3 py-1 text-[10px] font-black text-indigo-600 outline-none mt-1 uppercase">
+                        <option>Semestral</option>
+                        <option>Anual</option>
+                        <option>Trimestral</option>
+                      </select>
+                   </div>
+                   <div className="w-12 h-6 bg-indigo-600 rounded-full relative cursor-pointer shadow-inner">
+                      <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                   </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-6 border-t border-slate-100">
+                <button onClick={() => setShowSectorModal(false)} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => setShowSectorModal(false)}
+                  className="flex-[2] px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-3"
+                >
+                  <ClipboardList size={18} /> Salvar e Criar Estrutura
                 </button>
               </div>
             </div>
