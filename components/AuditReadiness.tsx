@@ -6,13 +6,14 @@ import {
   ArrowRight, ShieldAlert, History, Lock, Unlock, Hash, AlertTriangle
 } from 'lucide-react';
 import { useAppData } from '../appData';
+import { ActionStatus } from '../types';
 
 const AuditReadiness: React.FC = () => {
   const [isAuditorMode, setIsAuditorMode] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState('Todas as Unidades');
   const { actions } = useAppData();
-  const overdueActions = actions.filter(action => new Date(action.dueDate) < new Date() && action.status !== 'ConcluÇðdo' && action.status !== 'Concluído').length;
-  const missingEvidence = actions.filter(action => action.evidenceCount === 0 && action.status !== 'ConcluÇðdo' && action.status !== 'Concluído').length;
+  const overdueActions = actions.filter(action => new Date(action.dueDate) < new Date() && action.status !== ActionStatus.COMPLETED).length;
+  const missingEvidence = actions.filter(action => action.evidenceCount === 0 && action.status !== ActionStatus.COMPLETED).length;
   const actionStatus = overdueActions > 0 || missingEvidence > 0 ? 'warning' : 'ready';
   
   const referenceDate = new Date().toLocaleString('pt-BR');
@@ -68,7 +69,7 @@ const AuditReadiness: React.FC = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Status para Fiscalização</h2>
+            <h2 className="text-xl font-black text-slate-800 tracking-tight">Status para Fiscalização</h2>
             {isAuditorMode && (
               <span className="flex items-center gap-1.5 px-3 py-1 bg-indigo-600 text-white text-[10px] font-black uppercase rounded-lg shadow-lg animate-pulse">
                 <Lock size={12} /> Modo Auditor Ativo
@@ -155,7 +156,7 @@ const AuditReadiness: React.FC = () => {
 
               <div className="relative inline-block mb-6">
                 <div className="w-40 h-40 rounded-full border-[10px] border-slate-100 flex items-center justify-center bg-white shadow-inner">
-                  <span className="text-5xl font-black text-emerald-500 tracking-tighter">92%</span>
+                  <span className="text-xl font-black text-emerald-500 tracking-tighter">92%</span>
                 </div>
                 <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center border-4 border-white shadow-xl">
                   <ShieldCheck size={24} />

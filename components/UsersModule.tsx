@@ -45,7 +45,7 @@ const UsersModule: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Gestão de Usuários e Permissões</h2>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight">Gestão de Usuários e Permissões</h2>
           <p className="text-slate-500 text-sm font-medium">Controle de acesso granular e auditoria de logs conforme LGPD.</p>
         </div>
         <button 
@@ -66,7 +66,7 @@ const UsersModule: React.FC = () => {
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-              <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+              <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
             </div>
           </div>
         ))}
@@ -291,7 +291,7 @@ const UsersModule: React.FC = () => {
                   <UserPlus size={28} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black uppercase tracking-tight leading-none">Convidar Integrante</h3>
+                  <h3 className="text-xl font-black uppercase tracking-tight leading-none">Convidar Integrante</h3>
                   <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-[0.2em] mt-2 opacity-80">Rastreabilidade e Segurança LGPD</p>
                 </div>
               </div>

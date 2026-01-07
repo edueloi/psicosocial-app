@@ -79,7 +79,7 @@ const ActionPlan: React.FC = () => {
       {/* Top Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Plano de Ação NR-01</h2>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight">Plano de Ação NR-01</h2>
           <p className="text-slate-500 text-sm font-medium">Contramedidas vinculadas aos riscos e rastreabilidade documental.</p>
         </div>
         <div className="flex gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
@@ -107,7 +107,7 @@ const ActionPlan: React.FC = () => {
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-              <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+              <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
             </div>
           </div>
         ))}
@@ -339,7 +339,7 @@ const ActionPlan: React.FC = () => {
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Título da Ação</label>
-                  <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all" placeholder="Ex: Substituicao de filtros de exaustao" />
+                  <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all" placeholder="SubstituiÃ§Ã£o de filtros de exaustÃ£o" />
                 </div>
                 
                 <div className="col-span-2">
@@ -366,12 +366,12 @@ const ActionPlan: React.FC = () => {
 
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Impacto Esperado (Severidade Final)</label>
-                  <input type="text" value={newImpact} onChange={(e) => setNewImpact(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none" placeholder="Ex: Redução para nivel Moderado" />
+                  <input type="text" value={newImpact} onChange={(e) => setNewImpact(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none" placeholder="ReduÃ§Ã£o para nÃ­vel Moderado" />
                 </div>
 
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Descrição do Plano de Trabalho</label>
-                  <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium outline-none h-28 resize-none" placeholder="Detalhe as etapas e recursos necessarios..." />
+                  <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium outline-none h-28 resize-none" placeholder="Detalhe as etapas e recursos necessÃ¡rios..." />
                 </div>
               </div>
 

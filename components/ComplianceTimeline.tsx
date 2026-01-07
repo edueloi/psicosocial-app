@@ -130,7 +130,7 @@ const ComplianceTimeline: React.FC = () => {
       {/* Header with Scope & Context */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Timeline de Conformidade</h2>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight">Timeline de Conformidade</h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
             <p className="text-slate-500 text-xs font-bold flex items-center gap-1.5">
               <Calendar size={14} className="text-indigo-500" />

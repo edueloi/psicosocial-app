@@ -8,6 +8,7 @@ import {
   AlertCircle, Archive, Share2, FilterX, LayoutGrid
 } from 'lucide-react';
 import { useAppData } from '../appData';
+import { ActionStatus } from '../types';
 
 const DOCS = [
   { 
@@ -79,7 +80,7 @@ const Reports: React.FC = () => {
   const [filterType, setFilterType] = useState('Todos');
   const [showImmutabilityInfo, setShowImmutabilityInfo] = useState(false);
   const { actions } = useAppData();
-  const openActions = actions.filter(action => action.status !== 'ConcluÇðdo' && action.status !== 'Concluído').length;
+  const openActions = actions.filter(action => action.status !== ActionStatus.COMPLETED).length;
 
   const stats = [
     { label: 'Docs Oficiais', value: '03', icon: <FileSignature size={16}/>, color: 'text-indigo-600' },
@@ -93,7 +94,7 @@ const Reports: React.FC = () => {
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Central de Documentos e Relatórios</h2>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight">Central de Documentos e Relatórios</h2>
           <p className="text-slate-500 text-sm font-medium">Geração automática de conformidade NR-01 com blindagem jurídica.</p>
         </div>
         <div className="flex items-center gap-3">

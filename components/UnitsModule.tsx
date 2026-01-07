@@ -124,7 +124,7 @@ const UnitsModule: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Estrutura Organizacional</h2>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight">Estrutura Organizacional</h2>
           <p className="text-slate-500 text-sm font-medium">Gestão hierárquica de unidades e setores para inventário NR-01.</p>
         </div>
         <button 
@@ -145,7 +145,7 @@ const UnitsModule: React.FC = () => {
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-              <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+              <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
             </div>
           </div>
         ))}
@@ -363,7 +363,7 @@ const UnitsModule: React.FC = () => {
                   <Building2 size={28} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black uppercase tracking-tight">Nova Unidade</h3>
+                  <h3 className="text-xl font-black uppercase tracking-tight">Nova Unidade</h3>
                   <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest opacity-80 mt-2">Cadastro de Localização Estratégica</p>
                 </div>
               </div>
@@ -433,7 +433,7 @@ const UnitsModule: React.FC = () => {
                   <LayoutGrid size={28} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-black uppercase tracking-tight leading-none">Novo Setor Técnico</h3>
+                  <h3 className="text-xl font-black uppercase tracking-tight leading-none">Novo Setor Técnico</h3>
                   <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest opacity-80 mt-2">Vinculação Hierárquica e Mapeamento NR-01</p>
                 </div>
               </div>

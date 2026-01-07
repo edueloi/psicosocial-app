@@ -109,7 +109,7 @@ const Inventory: React.FC<InventoryProps> = ({ vision = 'tech' }) => {
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Gestão de Inventário de Riscos</h2>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight">Gestão de Inventário de Riscos</h2>
           <p className="text-slate-500 text-sm font-medium">Controle vivo de perigos e rastreabilidade total conforme NR-01.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -144,7 +144,7 @@ const Inventory: React.FC<InventoryProps> = ({ vision = 'tech' }) => {
             </div>
             <div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">{card.label}</p>
-              <p className={`text-2xl font-black ${card.color}`}>{card.value}</p>
+              <p className={`text-xl font-black ${card.color}`}>{card.value}</p>
             </div>
           </div>
         ))}

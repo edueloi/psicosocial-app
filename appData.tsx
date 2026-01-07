@@ -85,7 +85,7 @@ const initialEvents: TimelineEvent[] = [
   { 
     id: 'ev-1',
     date: '2024-04-10', 
-    title: 'Reavaliação de Riscos (Gestão de Mudanca)', 
+    title: 'Reavaliação de Riscos (Gestão de Mudança)', 
     desc: 'Unidade Norte: troca de maquinario no setor de producao disparou gatilho de revisao do PGR conforme NR-01.', 
     type: 'change', 
     legalRef: 'NR-01, 1.5.4.4.6',
@@ -99,7 +99,7 @@ const initialEvents: TimelineEvent[] = [
     id: 'ev-2',
     date: '2024-03-25', 
     title: 'Consolidação de Diagnóstico Psicossocial', 
-    desc: 'Conclusao da pesquisa trimestral. Score de clima em 82/100. Identificado hotspot no Comercial.', 
+    desc: 'Conclusão da pesquisa trimestral. Score de clima em 82/100. Identificado hotspot no Comercial.', 
     type: 'psychosocial', 
     legalRef: 'NR-01, 1.5.3.1',
     validity: 'Reavaliar em 90 dias',

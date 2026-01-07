@@ -58,7 +58,7 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
       {/* Module Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Gestão de Riscos Psicossociais</h2>
+          <h2 className="text-xl font-black text-slate-800 tracking-tight">Gestão de Riscos Psicossociais</h2>
           <p className="text-slate-500 text-sm font-medium italic">Diagnóstico e intervenção preventiva baseada na NR-01.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -172,28 +172,28 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
           <div className="mt-10 pt-8 border-t border-slate-50 grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-2xl font-black text-slate-800">4.2</p>
+                <p className="text-xl font-black text-slate-800">4.2</p>
                 <TrendingUp size={14} className="text-rose-500" />
               </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Absenteísmo (%)</p>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-2xl font-black text-emerald-500">82%</p>
+                <p className="text-xl font-black text-emerald-500">82%</p>
                 <TrendingUp size={14} className="text-emerald-500" />
               </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Engajamento</p>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-2xl font-black text-rose-500">12%</p>
+                <p className="text-xl font-black text-rose-500">12%</p>
                 <TrendingDown size={14} className="text-rose-500" />
               </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rotatividade</p>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-2xl font-black text-indigo-500">15</p>
+                <p className="text-xl font-black text-indigo-500">15</p>
                 <span className="text-[10px] font-bold text-slate-400">+3</span>
               </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações PGR Ativas</p>

@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 // Added Zap to the imports
 import { Activity, AlertTriangle, CheckCircle2, Clock, Award, ShieldCheck, TrendingDown, DollarSign, Scale, Filter, Calendar, FileCheck, History, Info, ChevronDown, Zap } from 'lucide-react';
 import { useAppData } from '../appData';
+import { ActionStatus } from '../types';
 
 interface DashboardProps {
   vision?: 'tech' | 'exec';
@@ -40,16 +41,16 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
   const [includePsychosocial, setIncludePsychosocial] = useState(true);
   const { actions } = useAppData();
-  const overdueCount = actions.filter(a => new Date(a.dueDate) < new Date() && a.status !== 'ConcluÇðdo' && a.status !== 'Concluído').length;
-  const pendingEvidence = actions.filter(a => a.evidenceCount === 0 && a.status !== 'ConcluÇðdo' && a.status !== 'Concluído').length;
-  const criticalOpen = actions.filter(a => (a.riskLevel === 'CrÇðtico' || a.riskLevel === 'Crítico') && a.status !== 'ConcluÇðdo' && a.status !== 'Concluído').length;
+  const overdueCount = actions.filter(a => new Date(a.dueDate) < new Date() && a.status !== ActionStatus.COMPLETED).length;
+  const pendingEvidence = actions.filter(a => a.evidenceCount === 0 && a.status !== ActionStatus.COMPLETED).length;
+  const criticalOpen = actions.filter(a => a.riskLevel === 'CrÃ­tico' && a.status !== ActionStatus.COMPLETED).length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
       {/* Dashboard Top Navigation & Filters */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">
+          <h2 className="text-xl font-bold text-slate-800">
             {vision === 'exec' ? 'Dashboard de Impacto e Governança' : 'Visão Geral Técnica NR-01'}
           </h2>
           <div className="flex items-center gap-2 mt-1">
@@ -110,7 +111,7 @@ const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-5xl font-black">85</span>
+              <span className="text-xl font-black">85</span>
               <span className="text-xl opacity-60">/100</span>
             </div>
             <p className="text-xs font-medium mt-2 text-indigo-100">Nível: <span className="font-bold">Maduro</span> • Crescimento de 12% vs mês anterior</p>
@@ -133,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pronto para Auditoria</p>
-                <p className="text-3xl font-black text-slate-800">95%</p>
+                <p className="text-xl font-black text-slate-800">95%</p>
               </div>
               <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
                 <ShieldCheck size={20} />
@@ -169,7 +170,7 @@ const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
       {/* Critical Items Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Riscos Críticos Abertos', value: '03', sub: 'Severidade Alta sem ação', icon: <AlertTriangle />, color: 'text-rose-600', bg: 'bg-rose-50' },
+          { label: 'Riscos CrÃ­ticos Abertos', value: '03', sub: 'Severidade Alta sem ação', icon: <AlertTriangle />, color: 'text-rose-600', bg: 'bg-rose-50' },
           { label: 'Ações Vencidas', value: '02', sub: 'Prazos expirados hoje', icon: <Clock />, color: 'text-rose-500', bg: 'bg-rose-50' },
           { label: 'Evidências Pendentes', value: '15', sub: 'Aguardando comprovação', icon: <History />, color: 'text-amber-600', bg: 'bg-amber-50' },
           { label: 'Último Evento NR-01', value: '09/04', sub: 'Reavaliação por Mudança', icon: <Activity />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
@@ -179,7 +180,7 @@ const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
               <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 {stat.icon}
               </div>
-              <p className={`text-3xl font-black ${stat.color}`}>{stat.value}</p>
+              <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
             </div>
             <div className="mt-4 relative z-10">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
