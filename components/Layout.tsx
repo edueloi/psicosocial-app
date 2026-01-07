@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { User, Tenant } from '../types';
 import { NAV_ITEMS } from '../constants';
@@ -146,3 +146,5 @@ const Layout: React.FC<LayoutProps> = ({ children, currentUser, currentTenant, a
 };
 
 export default Layout;
+
+

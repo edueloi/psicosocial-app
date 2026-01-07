@@ -1,14 +1,19 @@
-
+﻿
 import React, { useState } from 'react';
 import { 
   ShieldCheck, AlertCircle, CheckCircle2, XCircle, Printer, Eye, 
   PenTool, Info, Filter, Calendar, LayoutGrid, FileText, 
   ArrowRight, ShieldAlert, History, Lock, Unlock, Hash, AlertTriangle
 } from 'lucide-react';
+import { useAppData } from '../appData';
 
 const AuditReadiness: React.FC = () => {
   const [isAuditorMode, setIsAuditorMode] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState('Todas as Unidades');
+  const { actions } = useAppData();
+  const overdueActions = actions.filter(action => new Date(action.dueDate) < new Date() && action.status !== 'ConcluÇðdo' && action.status !== 'Concluído').length;
+  const missingEvidence = actions.filter(action => action.evidenceCount === 0 && action.status !== 'ConcluÇðdo' && action.status !== 'Concluído').length;
+  const actionStatus = overdueActions > 0 || missingEvidence > 0 ? 'warning' : 'ready';
   
   const referenceDate = new Date().toLocaleString('pt-BR');
 
@@ -24,9 +29,9 @@ const AuditReadiness: React.FC = () => {
     { 
       id: 2, 
       title: 'Plano de Ação em Execução', 
-      status: 'warning', 
+      status: actionStatus, 
       desc: '2 ações críticas pendentes de evidência técnica.',
-      nextStep: 'Anexar comprovantes na Unidade Norte.',
+      nextStep: 'Anexar evidencias e revisar prazos.',
       category: 'Ações',
       justification: 'Atraso no fornecimento de EPIs específicos pelo fornecedor homologado.'
     },
@@ -298,3 +303,6 @@ const AuditReadiness: React.FC = () => {
 };
 
 export default AuditReadiness;
+
+
+

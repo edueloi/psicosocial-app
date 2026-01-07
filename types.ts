@@ -1,4 +1,4 @@
-
+﻿
 export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
   TENANT_ADMIN = 'TENANT_ADMIN',
@@ -111,6 +111,38 @@ export interface ActionItem {
   expectedImpact: string;
 }
 
+export interface ActionPlanItem {
+  id: string;
+  title: string;
+  responsible: string;
+  dueDate: string;
+  status: ActionStatus;
+  desc: string;
+  riskId: string;
+  riskName: string;
+  riskCategory: RiskType;
+  riskLevel: string;
+  actionType: ActionType;
+  expectedImpact: string;
+  evidenceCount: number;
+}
+
+export type TimelineEventType = 'change' | 'psychosocial' | 'training' | 'document' | 'action';
+
+export interface TimelineEvent {
+  id: string;
+  date: string;
+  title: string;
+  desc: string;
+  type: TimelineEventType;
+  legalRef: string;
+  validity: string;
+  linkLabel: string;
+  linkTarget: string;
+  auditVersion: string;
+  evidenceHash?: string;
+}
+
 export interface ComplianceEvent {
   id: string;
   date: string;
@@ -141,3 +173,5 @@ export interface Unit {
   status: 'Ativo' | 'Em Reestruturação' | 'Inativo';
   sectors: Sector[];
 }
+
+

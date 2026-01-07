@@ -1,11 +1,12 @@
-
+﻿
 import React, { useState } from 'react';
 import { 
   BrainCircuit, MessageSquare, ShieldCheck, TrendingUp, TrendingDown, 
   Users, AlertTriangle, ChevronRight, CheckCircle2, Info, Filter, 
   Search, Calendar, LayoutGrid, Zap, History, X, Plus, AlertCircle, Clock
 } from 'lucide-react';
-import { IncidentStatus } from '../types';
+import { IncidentStatus, ActionStatus, ActionType, RiskType } from '../types';
+import { useAppData } from '../appData';
 
 interface PsychosocialProps {
   vision?: 'tech' | 'exec';
@@ -14,6 +15,26 @@ interface PsychosocialProps {
 const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) => {
   const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [showIncidentModal, setShowIncidentModal] = useState(false);
+  const { addAction, navigate } = useAppData();
+
+  const handleLinkToPgr = () => {
+    addAction({
+      id: `a-${Date.now()}`,
+      title: 'Reestruturação de Metas e Jornada',
+      responsible: 'RH / SST',
+      dueDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      status: ActionStatus.PENDING,
+      desc: 'Plano sugerido pelo modulo psicossocial.',
+      riskId: 'r2',
+      riskName: 'Carga Mental Elevada',
+      riskCategory: RiskType.PSYCHOSOCIAL,
+      riskLevel: 'Crítico',
+      actionType: ActionType.PSYCHOSOCIAL,
+      expectedImpact: 'Redução de stress e absenteismo',
+      evidenceCount: 0
+    });
+    navigate('actions');
+  };
 
   const getRiskLabel = (score: number) => {
     if (score >= 80) return { label: 'Crítico', color: 'bg-rose-100 text-rose-700 border-rose-200' };
@@ -260,7 +281,10 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
               </div>
             </div>
             <div className="flex gap-3">
-              <button className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2">
+              <button 
+                onClick={handleLinkToPgr}
+                className="flex-1 py-3.5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+              >
                 <Plus size={16} /> Vincular ao PGR
               </button>
             </div>
@@ -398,3 +422,5 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
 };
 
 export default PsychosocialModule;
+
+

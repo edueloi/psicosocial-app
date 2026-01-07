@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 /* Added ShieldAlert to imports from lucide-react */
 import { 
@@ -7,10 +7,12 @@ import {
   ExternalLink, ShieldCheck, AlertTriangle, Clock, Download, 
   Info, ChevronDown, Eye, Fingerprint, ShieldAlert
 } from 'lucide-react';
+import { useAppData } from '../appData';
 
 const ComplianceTimeline: React.FC = () => {
   const [filterType, setFilterType] = useState('Todos');
   const [showLogId, setShowLogId] = useState<string | null>(null);
+  const { events: appEvents, navigate } = useAppData();
 
   const events = [
     { 
@@ -75,8 +77,49 @@ const ComplianceTimeline: React.FC = () => {
     },
   ];
 
+  const getTypeStyle = (type: string) => {
+    switch (type) {
+      case 'change':
+        return { icon: <Zap className="text-rose-500" />, bg: 'bg-rose-50' };
+      case 'psychosocial':
+        return { icon: <BrainCircuit className="text-indigo-500" />, bg: 'bg-indigo-50' };
+      case 'training':
+        return { icon: <Users className="text-emerald-500" />, bg: 'bg-emerald-50' };
+      case 'document':
+        return { icon: <FileText className="text-slate-500" />, bg: 'bg-slate-50' };
+      case 'action':
+        return { icon: <CheckCircle2 className="text-indigo-500" />, bg: 'bg-indigo-50' };
+      default:
+        return { icon: <Info className="text-slate-400" />, bg: 'bg-slate-50' };
+    }
+  };
+
+  const getValidityColor = (validity: string) => {
+    if (validity.toLowerCase().includes('vencido')) {
+      return 'text-rose-600 bg-rose-50 border-rose-100';
+    }
+    if (validity.toLowerCase().includes('reavaliar') || validity.toLowerCase().includes('vencendo')) {
+      return 'text-amber-600 bg-amber-50 border-amber-100';
+    }
+    return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+  };
+
+  const uiEvents = [
+    ...appEvents.map(event => {
+      const style = getTypeStyle(event.type);
+      return {
+        ...event,
+        icon: style.icon,
+        bg: style.bg,
+        validityColor: getValidityColor(event.validity),
+        link: event.linkLabel
+      };
+    }),
+    ...events
+  ];
+
   const stats = [
-    { label: 'Eventos Registrados', value: '142', icon: <History size={16}/>, color: 'text-slate-600' },
+    { label: 'Eventos Registrados', value: String(uiEvents.length), icon: <History size={16}/>, color: 'text-slate-600' },
     { label: 'Eventos Críticos', value: '12', icon: <ShieldAlert size={16}/>, color: 'text-rose-600' },
     { label: 'Sem Evidência', value: '00', icon: <AlertTriangle size={16}/>, color: 'text-emerald-600' },
     { label: 'Última Revisão PGR', value: '10/04', icon: <FileText size={16}/>, color: 'text-indigo-600' },
@@ -172,7 +215,7 @@ const ComplianceTimeline: React.FC = () => {
       <div className="relative space-y-12">
         <div className="absolute left-8 top-4 bottom-4 w-0.5 bg-gradient-to-b from-indigo-200 via-slate-200 to-transparent"></div>
 
-        {events.map((event) => (
+        {uiEvents.map((event) => (
           <div key={event.id} className="relative pl-20 group animate-in slide-in-from-left duration-500">
             {/* Timeline Icon */}
             <div className={`absolute left-4 top-4 w-8 h-8 rounded-xl ${event.bg} flex items-center justify-center border-4 border-white shadow-md z-10 group-hover:scale-110 transition-transform`}>
@@ -221,7 +264,10 @@ const ComplianceTimeline: React.FC = () => {
 
                   {/* Direct Module Links */}
                   <div className="lg:w-48 shrink-0 space-y-2">
-                    <button className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 rounded-xl transition-all group/btn">
+                    <button 
+                      onClick={() => event.linkTarget && navigate(event.linkTarget)}
+                      className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 rounded-xl transition-all group/btn"
+                    >
                        <span className="text-[10px] font-black text-slate-500 group-hover/btn:text-indigo-600 uppercase tracking-tighter">{event.link}</span>
                        <ExternalLink size={12} className="text-slate-300 group-hover/btn:text-indigo-400" />
                     </button>
@@ -292,3 +338,5 @@ const ComplianceTimeline: React.FC = () => {
 };
 
 export default ComplianceTimeline;
+
+

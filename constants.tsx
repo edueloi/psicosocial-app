@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { LayoutDashboard, ShieldAlert, ClipboardList, Users, FileText, BrainCircuit, Building2, History, ShieldCheck } from 'lucide-react';
 import { UserRole, Tenant, User, ActionStatus, UserStatus } from './types';
@@ -88,3 +88,5 @@ export const STATUS_COLORS = {
   [ActionStatus.COMPLETED]: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   [ActionStatus.OVERDUE]: 'bg-rose-100 text-rose-700 border-rose-200',
 };
+
+

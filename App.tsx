@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import { MOCK_USERS, MOCK_TENANTS } from './constants';
 import { User, Tenant } from './types';
@@ -12,6 +12,7 @@ import UsersModule from './components/UsersModule';
 import UnitsModule from './components/UnitsModule';
 import AuditReadiness from './components/AuditReadiness';
 import ComplianceTimeline from './components/ComplianceTimeline';
+import { AppDataProvider } from './appData';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(MOCK_USERS[0]);
@@ -74,18 +75,22 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout 
-      currentUser={currentUser} 
-      currentTenant={currentTenant} 
-      activeTab={activeTab} 
-      setActiveTab={setActiveTab}
-      onLogout={logout}
-      vision={vision}
-      setVision={setVision}
-    >
-      {renderContent()}
-    </Layout>
+    <AppDataProvider onNavigate={setActiveTab}>
+      <Layout 
+        currentUser={currentUser} 
+        currentTenant={currentTenant} 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        onLogout={logout}
+        vision={vision}
+        setVision={setVision}
+      >
+        {renderContent()}
+      </Layout>
+    </AppDataProvider>
   );
 };
 
 export default App;
+
+

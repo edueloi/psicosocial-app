@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 /* Added LayoutGrid to the imports */
 import { 
@@ -7,6 +7,7 @@ import {
   FileSignature, Lock, History, ChevronRight, Info, CheckCircle2, 
   AlertCircle, Archive, Share2, FilterX, LayoutGrid
 } from 'lucide-react';
+import { useAppData } from '../appData';
 
 const DOCS = [
   { 
@@ -77,6 +78,8 @@ const DOCS = [
 const Reports: React.FC = () => {
   const [filterType, setFilterType] = useState('Todos');
   const [showImmutabilityInfo, setShowImmutabilityInfo] = useState(false);
+  const { actions } = useAppData();
+  const openActions = actions.filter(action => action.status !== 'ConcluÇðdo' && action.status !== 'Concluído').length;
 
   const stats = [
     { label: 'Docs Oficiais', value: '03', icon: <FileSignature size={16}/>, color: 'text-indigo-600' },
@@ -150,7 +153,14 @@ const Reports: React.FC = () => {
 
       {/* Documents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {DOCS.map((doc) => (
+        {DOCS.map((doc) => {
+          const isActionsDoc = doc.id === 'actions-1';
+          const status = isActionsDoc ? (openActions > 0 ? 'Em Aberto' : 'Concluído') : doc.status;
+          const statusColor = isActionsDoc 
+            ? (openActions > 0 ? 'text-indigo-600 bg-indigo-50 border-indigo-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100')
+            : doc.statusColor;
+
+          return (
           <div key={doc.id} className="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden flex flex-col group hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-500/5 transition-all">
             <div className="p-8 flex-1">
               <div className="flex items-start justify-between mb-6">
@@ -183,7 +193,7 @@ const Reports: React.FC = () => {
               <div className="space-y-4 mb-8">
                 <div className="flex items-center justify-between text-[11px] pb-3 border-b border-slate-50">
                   <span className="font-black text-slate-400 uppercase tracking-tighter">Status Validade</span>
-                  <span className={`px-3 py-0.5 rounded-lg font-black uppercase tracking-tighter border shadow-sm ${doc.statusColor}`}>{doc.status}</span>
+                  <span className={`px-3 py-0.5 rounded-lg font-black uppercase tracking-tighter border shadow-sm ${statusColor}`}>{status}</span>
                 </div>
                 <div className="flex items-center justify-between text-[11px] pb-3 border-b border-slate-50">
                   <span className="font-black text-slate-400 uppercase tracking-tighter">Responsável Técnico</span>
@@ -219,7 +229,8 @@ const Reports: React.FC = () => {
               </button>
             </div>
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {/* Audit & Compliance History */}
@@ -293,3 +304,5 @@ const Reports: React.FC = () => {
 };
 
 export default Reports;
+
+

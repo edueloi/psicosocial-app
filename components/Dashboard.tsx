@@ -1,8 +1,9 @@
-
+﻿
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 // Added Zap to the imports
 import { Activity, AlertTriangle, CheckCircle2, Clock, Award, ShieldCheck, TrendingDown, DollarSign, Scale, Filter, Calendar, FileCheck, History, Info, ChevronDown, Zap } from 'lucide-react';
+import { useAppData } from '../appData';
 
 interface DashboardProps {
   vision?: 'tech' | 'exec';
@@ -38,6 +39,10 @@ const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
   const [includePsychosocial, setIncludePsychosocial] = useState(true);
+  const { actions } = useAppData();
+  const overdueCount = actions.filter(a => new Date(a.dueDate) < new Date() && a.status !== 'ConcluÇðdo' && a.status !== 'Concluído').length;
+  const pendingEvidence = actions.filter(a => a.evidenceCount === 0 && a.status !== 'ConcluÇðdo' && a.status !== 'Concluído').length;
+  const criticalOpen = actions.filter(a => (a.riskLevel === 'CrÇðtico' || a.riskLevel === 'Crítico') && a.status !== 'ConcluÇðdo' && a.status !== 'Concluído').length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-12">
@@ -296,3 +301,6 @@ const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
 };
 
 export default Dashboard;
+
+
+

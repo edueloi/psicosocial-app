@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import { ActionStatus, ActionType, RiskType } from '../types';
 import { STATUS_COLORS } from '../constants';
@@ -8,80 +8,31 @@ import {
   Clock, Link as LinkIcon, TrendingDown, X, Paperclip, ChevronRight,
   Info, History, CheckCircle2
 } from 'lucide-react';
-
-const MOCK_ACTIONS = [
-  { 
-    id: 'a1', 
-    title: 'Workshop Preventivo: Saúde Mental', 
-    responsible: 'Ana RH', 
-    dueDate: '2024-05-20', 
-    status: ActionStatus.PENDING, 
-    desc: 'Treinamento obrigatório para gestores sobre prevenção ao Burnout e assédio.',
-    riskId: 'r2',
-    riskName: 'Carga Mental Elevada',
-    riskCategory: RiskType.PSYCHOSOCIAL,
-    riskLevel: 'Crítico',
-    actionType: ActionType.TRAINING,
-    expectedImpact: 'Redução de severidade Crítico → Moderado',
-    evidenceCount: 0
-  },
-  { 
-    id: 'a2', 
-    title: 'Troca de Filtros Exaustão Pintura', 
-    responsible: 'Carlos Manutenção', 
-    dueDate: '2023-10-15', 
-    status: ActionStatus.PENDING, 
-    desc: 'Substituição periódica obrigatória conforme cronograma de manutenção.',
-    riskId: 'r4',
-    riskName: 'Inalação de Solventes',
-    riskCategory: RiskType.CHEMICAL,
-    riskLevel: 'Crítico',
-    actionType: ActionType.ENGINEERING,
-    expectedImpact: 'Controle na fonte / Blindagem fiscal',
-    evidenceCount: 1
-  },
-  { 
-    id: 'a3', 
-    title: 'Substituição Mobiliário Ergonômico', 
-    responsible: 'Patrimônio', 
-    dueDate: '2024-12-05', 
-    status: ActionStatus.IN_PROGRESS, 
-    desc: 'Troca de cadeiras no faturamento conforme laudo ergonômico.',
-    riskId: 'r3',
-    riskName: 'Postura Inadequada',
-    riskCategory: RiskType.ERGONOMIC,
-    riskLevel: 'Moderado',
-    actionType: ActionType.ADMINISTRATIVE,
-    expectedImpact: 'Prevenção de afastamentos',
-    evidenceCount: 2
-  },
-  { 
-    id: 'a4', 
-    title: 'Implantação Canal de Ouvidoria', 
-    responsible: 'Dr. Roberto Santos', 
-    dueDate: '2023-09-30', 
-    status: ActionStatus.COMPLETED, 
-    desc: 'Sistema de relatos anônimos para gestão de riscos interpessoais.',
-    riskId: 'r2',
-    riskName: 'Conflitos Liderança',
-    riskCategory: RiskType.PSYCHOSOCIAL,
-    riskLevel: 'Moderado',
-    actionType: ActionType.ADMINISTRATIVE,
-    expectedImpact: 'Rastreabilidade e Compliance NR-01',
-    evidenceCount: 3
-  },
-];
+import { useAppData } from '../appData';
 
 const ActionPlan: React.FC = () => {
   const [activeTab, setActiveTab] = useState('kanban');
   const [showNewAction, setShowNewAction] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const { actions, addAction, addEvidence, completeAction } = useAppData();
+  const [newTitle, setNewTitle] = useState('');
+  const [newRiskId, setNewRiskId] = useState('r2');
+  const [newActionType, setNewActionType] = useState<ActionType>(ActionType.TRAINING);
+  const [newDueDate, setNewDueDate] = useState('');
+  const [newImpact, setNewImpact] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+
+  const riskOptions = [
+    { id: 'r2', name: 'Carga Mental Elevada', category: RiskType.PSYCHOSOCIAL, level: 'Crítico' },
+    { id: 'r4', name: 'Inalação de Solventes', category: RiskType.CHEMICAL, level: 'Crítico' },
+    { id: 'r3', name: 'Postura Inadequada', category: RiskType.ERGONOMIC, level: 'Moderado' },
+  ];
 
   const stats = [
-    { label: 'Total de Ações', value: MOCK_ACTIONS.length, color: 'text-slate-600', icon: <FileText size={18}/> },
-    { label: 'Ações Vencidas', value: MOCK_ACTIONS.filter(a => new Date(a.dueDate) < new Date() && a.status !== ActionStatus.COMPLETED).length, color: 'text-rose-600', icon: <Clock size={18}/> },
-    { label: 'Sem Evidência', value: MOCK_ACTIONS.filter(a => a.evidenceCount === 0 && a.status !== ActionStatus.COMPLETED).length, color: 'text-amber-600', icon: <Paperclip size={18}/> },
-    { label: 'Riscos Críticos', value: MOCK_ACTIONS.filter(a => a.riskLevel === 'Crítico').length, color: 'text-indigo-600', icon: <ShieldAlert size={18}/> },
+    { label: 'Total de Ações', value: actions.length, color: 'text-slate-600', icon: <FileText size={18}/> },
+    { label: 'Ações Vencidas', value: actions.filter(a => new Date(a.dueDate) < new Date() && a.status !== ActionStatus.COMPLETED).length, color: 'text-rose-600', icon: <Clock size={18}/> },
+    { label: 'Sem Evidência', value: actions.filter(a => a.evidenceCount === 0 && a.status !== ActionStatus.COMPLETED).length, color: 'text-amber-600', icon: <Paperclip size={18}/> },
+    { label: 'Riscos Críticos', value: actions.filter(a => a.riskLevel === 'Crítico' || a.riskLevel === 'Crítico').length, color: 'text-indigo-600', icon: <ShieldAlert size={18}/> },
   ];
 
   const columns = [
@@ -92,6 +43,35 @@ const ActionPlan: React.FC = () => {
 
   const isOverdue = (date: string, status: ActionStatus) => {
     return new Date(date) < new Date() && status !== ActionStatus.COMPLETED;
+  };
+
+  const handleCreateAction = () => {
+    const selectedRisk = riskOptions.find(risk => risk.id === newRiskId) || riskOptions[0];
+    const title = newTitle.trim() || 'Nova ação corretiva';
+
+    addAction({
+      id: `a-${Date.now()}`,
+      title,
+      responsible: 'Equipe SST',
+      dueDate: newDueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      status: ActionStatus.PENDING,
+      desc: newDesc.trim() || 'Ação criada manualmente no plano.',
+      riskId: selectedRisk.id,
+      riskName: selectedRisk.name,
+      riskCategory: selectedRisk.category,
+      riskLevel: selectedRisk.level,
+      actionType: newActionType,
+      expectedImpact: newImpact.trim() || 'Redução de severidade',
+      evidenceCount: 0
+    });
+
+    setNewTitle('');
+    setNewRiskId('r2');
+    setNewActionType(ActionType.TRAINING);
+    setNewDueDate('');
+    setNewImpact('');
+    setNewDesc('');
+    setShowNewAction(false);
   };
 
   return (
@@ -133,7 +113,7 @@ const ActionPlan: React.FC = () => {
         ))}
       </div>
 
-      {/* Kanban Container */}
+      {activeTab === 'kanban' ? (
       <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar min-h-[700px]">
         {columns.map(col => (
           <div key={col.status} className="flex-1 min-w-[360px] flex flex-col gap-4">
@@ -143,12 +123,12 @@ const ActionPlan: React.FC = () => {
                 {col.title}
               </h3>
               <span className="bg-slate-200 text-slate-600 text-[10px] font-black px-3 py-1 rounded-full border border-white shadow-sm">
-                {MOCK_ACTIONS.filter(a => col.status === ActionStatus.PENDING ? (a.status === ActionStatus.PENDING || a.status === ActionStatus.OVERDUE) : a.status === col.status).length}
+                {actions.filter(a => col.status === ActionStatus.PENDING ? (a.status === ActionStatus.PENDING || a.status === ActionStatus.OVERDUE) : a.status === col.status).length}
               </span>
             </div>
 
             <div className="flex-1 space-y-5 bg-slate-100/40 p-3 rounded-3xl border border-dashed border-slate-200">
-              {MOCK_ACTIONS.filter(a => col.status === ActionStatus.PENDING ? (a.status === ActionStatus.PENDING || a.status === ActionStatus.OVERDUE) : a.status === col.status).map(action => {
+              {actions.filter(a => col.status === ActionStatus.PENDING ? (a.status === ActionStatus.PENDING || a.status === ActionStatus.OVERDUE) : a.status === col.status).map(action => {
                 const overdue = isOverdue(action.dueDate, action.status);
                 const canComplete = action.evidenceCount > 0;
                 
@@ -190,7 +170,7 @@ const ActionPlan: React.FC = () => {
                     
                     {/* Mandatory Risk Connection Badge */}
                     <div className="mb-5 p-3 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4 group/risk hover:border-indigo-200 transition-all">
-                      <div className={`w-1.5 h-10 rounded-full shrink-0 ${action.riskLevel === 'Crítico' ? 'bg-rose-500' : 'bg-amber-500'}`}></div>
+                      <div className={`w-1.5 h-10 rounded-full shrink-0 ${action.riskLevel === 'Crítico' || action.riskLevel === 'Crítico' ? 'bg-rose-500' : 'bg-amber-500'}`}></div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5 mb-1">
                           <LinkIcon size={12} /> Risco Vinculado
@@ -198,7 +178,7 @@ const ActionPlan: React.FC = () => {
                         <p className="text-xs font-black text-slate-700 truncate">{action.riskName}</p>
                         <p className="text-[9px] font-bold text-slate-500 uppercase">{action.riskCategory} • {action.riskLevel}</p>
                       </div>
-                      <ShieldAlert size={16} className={action.riskLevel === 'Crítico' ? 'text-rose-400' : 'text-amber-400'} />
+                      <ShieldAlert size={16} className={action.riskLevel === 'Crítico' || action.riskLevel === 'Crítico' ? 'text-rose-400' : 'text-amber-400'} />
                     </div>
 
                     <div className="flex flex-col gap-4 pt-5 border-t border-slate-50">
@@ -239,7 +219,7 @@ const ActionPlan: React.FC = () => {
                     {/* Contextual Action Button */}
                     {action.status !== ActionStatus.COMPLETED && (
                       <div className="mt-5 flex gap-2">
-                        <button 
+                        <button onClick={() => completeAction(action.id)} 
                           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
                             canComplete 
                             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700' 
@@ -251,7 +231,7 @@ const ActionPlan: React.FC = () => {
                           <CheckCircle size={16} /> Concluir
                         </button>
                         {!canComplete && (
-                          <button className="w-12 h-12 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100 hover:bg-indigo-100 transition-all">
+                          <button onClick={() => addEvidence(action.id)} className="w-12 h-12 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100 hover:bg-indigo-100 transition-all">
                             <Plus size={20} />
                           </button>
                         )}
@@ -271,6 +251,70 @@ const ActionPlan: React.FC = () => {
           </div>
         ))}
       </div>
+      ) : (
+        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Lista consolidada</p>
+              <h3 className="text-lg font-black text-slate-800">Acoes do plano</h3>
+            </div>
+            <button
+              onClick={() => setShowNewAction(true)}
+              className="px-4 py-2 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all"
+            >
+              + Nova ação
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left">
+              <thead className="bg-slate-50">
+                <tr className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <th className="px-6 py-3">Ação</th>
+                  <th className="px-6 py-3">Risco</th>
+                  <th className="px-6 py-3">Responsável</th>
+                  <th className="px-6 py-3">Prazo</th>
+                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Evidências</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {actions.map(action => {
+                  const overdue = isOverdue(action.dueDate, action.status);
+
+                  return (
+                    <tr key={action.id} className="text-sm text-slate-700 hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <p className="font-black text-slate-800">{action.title}</p>
+                        <p className="text-xs text-slate-500 line-clamp-1">{action.desc}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-xs font-black text-slate-700">{action.riskName}</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase">{action.riskCategory}</p>
+                      </td>
+                      <td className="px-6 py-4 text-xs font-black">{action.responsible}</td>
+                      <td className="px-6 py-4 text-xs font-black">
+                        <span className={overdue ? 'text-rose-600' : 'text-slate-600'}>
+                          {new Date(action.dueDate).toLocaleDateString('pt-BR')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border shadow-sm ${STATUS_COLORS[action.status]}`}>
+                          {overdue ? 'Atrasada' : action.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs font-black text-slate-600">
+                        <span className={action.evidenceCount > 0 ? 'text-indigo-600' : 'text-slate-400'}>
+                          {action.evidenceCount}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* New Action Form Modal */}
       {showNewAction && (
@@ -286,7 +330,7 @@ const ActionPlan: React.FC = () => {
                   <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest opacity-80">Rastreabilidade NR-01</p>
                 </div>
               </div>
-              <button onClick={() => setShowNewAction(false)} className="hover:rotate-90 transition-transform">
+              <button onClick={handleCreateAction} className="hover:rotate-90 transition-transform">
                 <X size={24} />
               </button>
             </div>
@@ -295,38 +339,39 @@ const ActionPlan: React.FC = () => {
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Título da Ação</label>
-                  <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all" placeholder="Ex: Substituição de filtros de exaustão" />
+                  <input type="text" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all" placeholder="Ex: Substituicao de filtros de exaustao" />
                 </div>
                 
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Vincular Risco (Obrigatório)</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all border-l-4 border-l-rose-500">
-                    <option>Selecione um risco do inventário...</option>
-                    <option>Risco Psicossocial - Carga Mental (Crítico)</option>
-                    <option>Risco Químico - Inalação Solventes (Crítico)</option>
-                    <option>Risco Físico - Ruído (Moderado)</option>
-                  </select>
+                  <select value={newRiskId} onChange={(e) => setNewRiskId(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all border-l-4 border-l-rose-500">
+  {riskOptions.map(risk => (
+    <option key={risk.id} value={risk.id}>
+      {risk.name} ({risk.level})
+    </option>
+  ))}
+</select>
                 </div>
 
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Tipo de Ação</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                  <select value={newActionType} onChange={(e) => setNewActionType(e.target.value as ActionType)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
                     {Object.values(ActionType).map(v => <option key={v}>{v}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Prazo de Conclusão</label>
-                  <input type="date" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none" />
+                  <input type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none" />
                 </div>
 
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Impacto Esperado (Severidade Final)</label>
-                  <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none" placeholder="Ex: Redução para nível Moderado" />
+                  <input type="text" value={newImpact} onChange={(e) => setNewImpact(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none" placeholder="Ex: Redução para nivel Moderado" />
                 </div>
 
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Descrição do Plano de Trabalho</label>
-                  <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium outline-none h-28 resize-none" placeholder="Detalhe as etapas e recursos necessários..." />
+                  <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium outline-none h-28 resize-none" placeholder="Detalhe as etapas e recursos necessarios..." />
                 </div>
               </div>
 
@@ -342,7 +387,7 @@ const ActionPlan: React.FC = () => {
                   Cancelar
                 </button>
                 <button 
-                  onClick={() => setShowNewAction(false)}
+                  onClick={handleCreateAction}
                   className="flex-1 px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
                 >
                   Criar Plano de Ação
@@ -357,3 +402,21 @@ const ActionPlan: React.FC = () => {
 };
 
 export default ActionPlan;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

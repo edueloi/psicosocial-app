@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import { 
   Building2, Plus, ChevronRight, Users, Shield, Factory, 
@@ -8,6 +8,7 @@ import {
   ShieldCheck, BrainCircuit, Activity, ClipboardList
 } from 'lucide-react';
 import { Unit, Sector } from '../types';
+import { useAppData } from '../appData';
 
 const MOCK_STRUCTURE: Unit[] = [
   {
@@ -104,6 +105,7 @@ const UnitsModule: React.FC = () => {
   const [targetUnitId, setTargetUnitId] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
+  const { navigate } = useAppData();
 
   const stats = [
     { label: 'Total Unidades', value: MOCK_STRUCTURE.length, icon: <Building2 size={16}/>, color: 'text-slate-600' },
@@ -322,10 +324,10 @@ const UnitsModule: React.FC = () => {
 
                     {/* Quick Access Actions */}
                     <div className="mt-5 grid grid-cols-2 gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
-                      <button className="flex items-center justify-center gap-2 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
+                      <button onClick={() => navigate('inventory')} className="flex items-center justify-center gap-2 py-2.5 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
                         Inventário
                       </button>
-                      <button className="flex items-center justify-center gap-2 py-2.5 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 hover:text-white transition-all">
+                      <button onClick={() => navigate('actions')} className="flex items-center justify-center gap-2 py-2.5 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 hover:text-white transition-all">
                         Plano Ação
                       </button>
                     </div>
@@ -602,3 +604,6 @@ const UnitsModule: React.FC = () => {
 };
 
 export default UnitsModule;
+
+
+

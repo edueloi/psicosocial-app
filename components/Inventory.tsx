@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import { RiskType } from '../types';
 import { 
@@ -7,6 +7,7 @@ import {
   Eye, X, CheckCircle2, History, Ban, Settings2, LayoutGrid, Info
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useAppData } from '../appData';
 
 interface InventoryProps {
   vision?: 'tech' | 'exec';
@@ -85,6 +86,7 @@ const Inventory: React.FC<InventoryProps> = ({ vision = 'tech' }) => {
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const { addActionFromRisk } = useAppData();
 
   const getLevelColor = (prob: number, sev: number) => {
     const score = prob * sev;
@@ -269,6 +271,17 @@ const Inventory: React.FC<InventoryProps> = ({ vision = 'tech' }) => {
                             <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
                               <button className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all">
                                 <Eye size={14} /> Ver Detalhes (Drawer)
+                              </button>
+                              <button onClick={() => {
+                                addActionFromRisk({
+                                  id: risk.id,
+                                  description: risk.description,
+                                  category: risk.type,
+                                  level: getLevelName(risk.probability, risk.severity)
+                                });
+                                setActiveMenu(null);
+                              }} className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all">
+                                <CheckCircle2 size={14} /> Criar Ação
                               </button>
                               <button className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 rounded-xl transition-all">
                                 <FileText size={14} /> Editar Dados Técnicos
@@ -504,3 +517,8 @@ const Inventory: React.FC<InventoryProps> = ({ vision = 'tech' }) => {
 };
 
 export default Inventory;
+
+
+
+
+
