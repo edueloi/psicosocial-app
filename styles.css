@@ -47,6 +47,11 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
+@keyframes zoom-in {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 .animate-in {
   animation: fade-in 0.5s ease-out;
 }
@@ -57,4 +62,30 @@
 
 .slide-in-from-bottom-4 {
   animation: slide-in-from-bottom 0.7s ease-out;
+}
+
+.zoom-in-95 {
+  animation: zoom-in 0.3s ease-out;
+}
+
+/* Smooth transitions */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus visible para acessibilidade */
+*:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* Fix para modal backdrop - remove margin-top do space-y */
+.fixed.inset-0.z-50 > :not([hidden]) ~ :not([hidden]),
+.fixed.z-50 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0 !important;
+}
+
+/* Remove espaçamento vertical em containers de modal */
+[class*="space-y"] > .fixed {
+  margin-top: 0 !important;
 }

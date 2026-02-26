@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { IncidentStatus, ActionStatus, ActionType, RiskType } from '../types';
 import { useAppData } from '../appData';
+import Button from './Button';
 
 interface PsychosocialProps {
   vision?: 'tech' | 'exec';
@@ -56,50 +57,50 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       {/* Module Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-slate-800 tracking-tight">Gestão de Riscos Psicossociais</h2>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Gestão de Riscos Psicossociais</h2>
           <p className="text-slate-500 text-sm font-medium italic">Diagnóstico e intervenção preventiva baseada na NR-01.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button 
+          <Button 
+            variant="danger"
             onClick={() => setShowIncidentModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-rose-50 text-rose-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-100 transition-all border border-rose-200"
           >
             <AlertCircle size={16} />
             Relatar Incidente
-          </button>
-          <button 
+          </Button>
+          <Button 
+            variant="primary"
             onClick={() => setShowSurveyModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 transition-all border border-indigo-500"
           >
             <Plus size={16} />
             Nova Pesquisa
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Global Filters */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-[200px] relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
             type="text" 
             placeholder="Filtrar por setor ou unidade..." 
-            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/10"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/10"
           />
         </div>
         <div className="flex items-center gap-2">
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase">
+          <select className="text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 outline-none">
             <option>Unidade</option>
             <option>Planta Norte</option>
             <option>Escritório Central</option>
           </select>
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase">
+          <select className="text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 outline-none">
             <option>Período: 2024</option>
             <option>Período: 2023</option>
           </select>
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase">
+          <select className="text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 outline-none">
             <option>Fonte: Todas</option>
             <option>Pesquisas</option>
             <option>Relatos</option>
@@ -109,16 +110,16 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
       </div>
 
       {/* Hero Analytics Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Heatmap/Risk Card */}
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm p-8 flex flex-col">
-          <div className="flex items-center justify-between mb-8">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h3 className="font-black text-slate-800 text-lg flex items-center gap-2">
                 Mapa de Risco Psicossocial por Setor
                 <div className="group relative">
                   <Info size={14} className="text-slate-300 cursor-help" />
-                  <div className="absolute left-0 bottom-full mb-2 w-64 bg-slate-900 text-white text-[10px] p-3 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none shadow-2xl">
+                  <div className="absolute left-0 bottom-full mb-2 w-64 bg-slate-900 text-white text-xs p-3 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none shadow-2xl">
                     Baseado em: Pesquisa Psicossocial (Likert), Volume de Relatos, Taxas de Absenteísmo e Turnover. Classificação conforme matriz de risco NR-01.
                   </div>
                 </div>
@@ -126,11 +127,11 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
               <p className="text-xs text-slate-400 font-medium">Classificação técnica de exposição organizacional</p>
             </div>
             <div className="flex gap-2">
-               <span className="px-2 py-1 bg-rose-50 text-rose-600 text-[10px] font-black uppercase rounded-lg border border-rose-100">02 Setores em Atenção</span>
+               <span className="px-2 py-1 bg-rose-50 text-rose-600 text-xs font-bold uppercase rounded-lg border border-rose-100">02 Setores em Atenção</span>
             </div>
           </div>
           
-          <div className="space-y-8 flex-1">
+          <div className="space-y-6 flex-1">
             {[
               { label: 'Setor Comercial', score: 85, source: 'Pesquisa + Relatos', trend: 'up' },
               { label: 'Produção Industrial', score: 62, source: 'Indicadores', trend: 'down' },
@@ -139,24 +140,24 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
             ].map((sector, i) => {
               const risk = getRiskLabel(sector.score);
               return (
-                <div key={i} className="space-y-3 group/row">
+                <div key={i} className="space-y-2 group/row">
                   <div className="flex justify-between items-end">
                     <div>
                       <span className="text-sm font-black text-slate-800">{sector.label}</span>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Fonte principal: {sector.source}</p>
+                      <p className="text-xs text-slate-400 font-medium">Fonte: {sector.source}</p>
                     </div>
                     <div className="text-right">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border mb-1 inline-block ${risk.color}`}>
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase border mb-1 inline-block ${risk.color}`}>
                         {risk.label}
                       </span>
                       <div className="flex items-center gap-2 justify-end">
                         {sector.trend === 'up' && <TrendingUp size={12} className="text-rose-500" />}
                         {sector.trend === 'down' && <TrendingDown size={12} className="text-emerald-500" />}
-                        <span className="font-black text-slate-800 text-base">{sector.score}<span className="text-slate-300 text-[10px]">/100</span></span>
+                        <span className="font-black text-slate-800 text-base">{sector.score}<span className="text-slate-300 text-xs">/100</span></span>
                       </div>
                     </div>
                   </div>
-                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
                     <div 
                       className={`h-full rounded-full transition-all duration-1000 ${
                         sector.score >= 80 ? 'bg-rose-600' : sector.score >= 60 ? 'bg-rose-400' : sector.score >= 40 ? 'bg-amber-500' : 'bg-emerald-500'
@@ -169,46 +170,46 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
             })}
           </div>
 
-          <div className="mt-10 pt-8 border-t border-slate-50 grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="mt-6 pt-6 border-t border-slate-50 grid grid-cols-2 md:grid-cols-4 gap-5">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-xl font-black text-slate-800">4.2</p>
                 <TrendingUp size={14} className="text-rose-500" />
               </div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Absenteísmo (%)</p>
+              <p className="text-xs font-bold text-slate-400 uppercase">Absenteísmo (%)</p>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-xl font-black text-emerald-500">82%</p>
                 <TrendingUp size={14} className="text-emerald-500" />
               </div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Engajamento</p>
+              <p className="text-xs font-bold text-slate-400 uppercase">Engajamento</p>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-xl font-black text-rose-500">12%</p>
                 <TrendingDown size={14} className="text-rose-500" />
               </div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Rotatividade</p>
+              <p className="text-xs font-bold text-slate-400 uppercase">Rotatividade</p>
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <p className="text-xl font-black text-indigo-500">15</p>
-                <span className="text-[10px] font-bold text-slate-400">+3</span>
+                <span className="text-xs font-medium text-slate-400">+3</span>
               </div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ações PGR Ativas</p>
+              <p className="text-xs font-bold text-slate-400 uppercase">Ações PGR Ativas</p>
             </div>
           </div>
         </div>
 
         {/* Incident Center */}
-        <div className="lg:col-span-1 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
-          <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <h3 className="font-black text-slate-800 text-sm flex items-center gap-2 uppercase tracking-widest">
-              <MessageSquare size={18} className="text-indigo-600" />
+        <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
+          <div className="p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+            <h3 className="font-black text-slate-800 text-sm flex items-center gap-2 uppercase">
+              <MessageSquare size={16} className="text-indigo-600" />
               Relatos e Incidentes
             </h3>
-            <span className="bg-rose-100 text-rose-700 text-[10px] font-black px-3 py-1 rounded-full shadow-sm">02 Críticos</span>
+            <span className="bg-rose-100 text-rose-700 text-xs font-bold px-2 py-1 rounded-full shadow-sm">02 Críticos</span>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {[
@@ -217,28 +218,28 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
               { id: 'rel-3', type: 'Assédio Moral (Relato)', date: '3 dias atrás', status: IncidentStatus.IN_ANALYSIS, sector: 'Produção', urgent: true },
               { id: 'rel-4', type: 'Feedback de Clima Negativo', date: 'Semana passada', status: IncidentStatus.CLOSED, sector: 'RH', urgent: false },
             ].map((rel, i) => (
-              <div key={i} className="p-6 border-b border-slate-50 hover:bg-slate-50/50 transition-all cursor-pointer group relative">
-                {rel.urgent && <div className="absolute left-0 top-6 bottom-6 w-1 bg-rose-500 rounded-r"></div>}
-                <div className="flex justify-between items-start mb-3">
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${getStatusBadge(rel.status)}`}>
+              <div key={i} className="p-5 border-b border-slate-50 hover:bg-slate-50/50 transition-all cursor-pointer group relative">
+                {rel.urgent && <div className="absolute left-0 top-5 bottom-5 w-1 bg-rose-500 rounded-r"></div>}
+                <div className="flex justify-between items-start mb-2">
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase border ${getStatusBadge(rel.status)}`}>
                     {rel.status}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-bold uppercase">{rel.date}</span>
+                  <span className="text-xs text-slate-400 font-medium">{rel.date}</span>
                 </div>
-                <h4 className="font-black text-slate-800 text-sm mb-1 group-hover:text-indigo-600 transition-colors">{rel.type}</h4>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mb-3">Setor: {rel.sector}</p>
+                <h4 className="font-bold text-slate-800 text-sm mb-1 group-hover:text-indigo-600 transition-colors">{rel.type}</h4>
+                <p className="text-xs text-slate-500 font-medium mb-3">Setor: {rel.sector}</p>
                 <div className="flex items-center justify-between">
                   <div className="flex -space-x-1">
-                    <div className="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-black text-slate-500">RT</div>
+                    <div className="w-5 h-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-xs font-bold text-slate-500">RT</div>
                   </div>
-                  <button className="text-[10px] font-black text-indigo-500 uppercase flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button className="text-xs font-bold text-indigo-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     Analisar <ChevronRight size={12} />
                   </button>
                 </div>
               </div>
             ))}
           </div>
-          <button className="p-5 text-center text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:bg-indigo-50 transition-colors border-t border-slate-100">
+          <button className="p-4 text-center text-xs font-bold text-indigo-600 uppercase hover:bg-indigo-50 transition-colors border-t border-slate-100">
             Gerenciar Todos os Incidentes
           </button>
         </div>

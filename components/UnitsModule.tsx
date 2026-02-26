@@ -3,12 +3,14 @@ import React, { useState } from 'react';
 import { 
   Building2, Plus, ChevronRight, Users, Shield, Factory, 
   MapPin, MoreVertical, Search, Filter, User, Calendar, 
-  ShieldAlert, AlertTriangle, CheckCircle2, X, Archive, 
+  ShieldAlert, AlertTriangle, CheckCircle2, Archive, 
   Settings2, LayoutGrid, Info, Eye, ExternalLink, History,
   ShieldCheck, BrainCircuit, Activity, ClipboardList
 } from 'lucide-react';
 import { Unit, Sector } from '../types';
 import { useAppData } from '../appData';
+import Button from './Button';
+import Modal from './Modal';
 
 const MOCK_STRUCTURE: Unit[] = [
   {
@@ -120,80 +122,79 @@ const UnitsModule: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-slate-800 tracking-tight">Estrutura Organizacional</h2>
-          <p className="text-slate-500 text-sm font-medium">Gestão hierárquica de unidades e setores para inventário NR-01.</p>
+          <h2 className="text-2xl font-bold text-slate-900">Estrutura Organizacional</h2>
+          <p className="text-slate-500 text-sm mt-1">Gestão hierárquica de unidades e setores para inventário NR-01</p>
         </div>
-        <button 
+        <Button
           onClick={() => setShowUnitModal(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-600/20 transition-all border border-indigo-500"
+          variant="primary"
+          size="md"
+          icon={<Plus size={18} />}
         >
-          <Plus size={18} />
           Nova Unidade
-        </button>
+        </Button>
       </div>
 
       {/* Summary Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-5 hover:shadow-md transition-all">
-            <div className={`w-12 h-12 rounded-2xl bg-slate-50 ${stat.color} flex items-center justify-center`}>
+          <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-slate-300 transition-all">
+            <div className={`w-11 h-11 rounded-xl bg-slate-50 ${stat.color} flex items-center justify-center shrink-0`}>
               {stat.icon}
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{stat.label}</p>
-              <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-0.5">{stat.label}</p>
+              <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
-        <div className="flex-1 min-w-[280px] relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Pesquisar unidade, setor ou responsável..." 
-            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter">
-            <option>Status: Todos</option>
-            <option>Ativo</option>
-            <option>Em Reestruturação</option>
-            <option>Inativo</option>
-          </select>
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter">
-            <option>Riscos: Todos</option>
-            <option>Apenas Críticos</option>
-            <option>Sem Riscos Críticos</option>
-          </select>
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter">
-            <option>Revisão: Em Dia</option>
-            <option>Revisão: Vencida</option>
-          </select>
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 relative">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Pesquisar unidade, setor ou responsável..." 
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <select className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none hover:border-slate-300 transition-colors cursor-pointer">
+              <option>Status: Todos</option>
+              <option>Ativo</option>
+              <option>Em Reestruturação</option>
+              <option>Inativo</option>
+            </select>
+            <select className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none hover:border-slate-300 transition-colors cursor-pointer">
+              <option>Riscos: Todos</option>
+              <option>Apenas Críticos</option>
+              <option>Sem Riscos Críticos</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Units List */}
-      <div className="space-y-8">
+      <div className="space-y-6">
         {MOCK_STRUCTURE.map((unit) => (
-          <div key={unit.id} className="bg-white border border-slate-200 rounded-[40px] shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-500">
+          <div key={unit.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
             {/* Unit Header */}
-            <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6 relative group">
-              <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-white rounded-[24px] border border-slate-200 flex items-center justify-center text-indigo-600 shadow-sm group-hover:scale-110 transition-transform">
-                  <Factory size={32} />
+            <div className="p-6 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <div className="w-14 h-14 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                  <Factory size={28} />
                 </div>
                 <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">{unit.name}</h3>
-                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${STATUS_COLORS[unit.status]}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-lg font-bold text-slate-900">{unit.name}</h3>
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${STATUS_COLORS[unit.status]}`}>
                       {unit.status}
                     </span>
                   </div>

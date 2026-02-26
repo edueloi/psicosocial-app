@@ -8,6 +8,7 @@ import {
   Info, ChevronDown, Eye, Fingerprint, ShieldAlert
 } from 'lucide-react';
 import { useAppData } from '../appData';
+import Button from './Button';
 
 const ComplianceTimeline: React.FC = () => {
   const [filterType, setFilterType] = useState('Todos');
@@ -128,25 +129,25 @@ const ComplianceTimeline: React.FC = () => {
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-24">
       {/* Header with Scope & Context */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div>
-          <h2 className="text-xl font-black text-slate-800 tracking-tight">Timeline de Conformidade</h2>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight">Timeline de Conformidade</h2>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-            <p className="text-slate-500 text-xs font-bold flex items-center gap-1.5">
+            <p className="text-slate-500 text-sm font-medium flex items-center gap-1.5">
               <Calendar size={14} className="text-indigo-500" />
               Período: <span className="text-slate-800">01/01/2024 → {new Date().toLocaleDateString('pt-BR')}</span>
             </p>
             <div className="h-3 w-px bg-slate-300 hidden sm:block"></div>
-            <p className="text-slate-500 text-xs font-bold flex items-center gap-1.5">
+            <p className="text-slate-500 text-sm font-medium flex items-center gap-1.5">
               <ShieldCheck size={14} className="text-indigo-500" />
-              Escopo: <span className="text-slate-800 uppercase tracking-tighter">Eventos Jurídicos NR-01</span>
+              Escopo: <span className="text-slate-800 uppercase">Eventos Jurídicos NR-01</span>
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 shadow-sm transition-all">
-            <Download size={16} className="text-indigo-600" /> Exportar Linha do Tempo
-          </button>
+          <Button variant="secondary">
+            <Download size={16} /> Exportar Timeline
+          </Button>
           <div className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-2xl border border-emerald-100 flex items-center gap-2 shadow-sm">
             <CheckCircle2 size={16} />
             <span className="text-[10px] font-black uppercase tracking-widest">Diligência Comprovada</span>
@@ -155,32 +156,32 @@ const ComplianceTimeline: React.FC = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
-             <div className={`w-8 h-8 rounded-xl bg-slate-50 ${stat.color} flex items-center justify-center`}>
+          <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
+             <div className={`w-10 h-10 rounded-xl bg-slate-50 ${stat.color} flex items-center justify-center`}>
                 {stat.icon}
              </div>
              <div>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-tight">{stat.label}</p>
-                <p className={`text-sm font-black ${stat.color}`}>{stat.value}</p>
+                <p className="text-xs font-bold text-slate-400 uppercase">{stat.label}</p>
+                <p className={`text-lg font-black ${stat.color}`}>{stat.value}</p>
              </div>
           </div>
         ))}
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
+      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
         <div className="flex-1 min-w-[240px] relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
             type="text" 
             placeholder="Pesquisar evento, responsável ou hash de evidência..." 
-            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
           />
         </div>
         <div className="flex items-center gap-2">
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter">
+          <select className="text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 outline-none">
             <option>Unidade: Todas</option>
             <option>Planta Norte</option>
             <option>Escritório Central</option>
@@ -188,7 +189,7 @@ const ComplianceTimeline: React.FC = () => {
           <select 
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter"
+            className="text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 outline-none"
           >
             <option>Tipo: Todos</option>
             <option>Gestão de Mudança</option>
@@ -196,7 +197,7 @@ const ComplianceTimeline: React.FC = () => {
             <option>Treinamento</option>
             <option>Documento</option>
           </select>
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter">
+          <select className="text-xs font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 outline-none">
             <option>Status: Vigente</option>
             <option>Status: Vencido</option>
           </select>
@@ -206,8 +207,8 @@ const ComplianceTimeline: React.FC = () => {
       {/* Immutability Alert */}
       <div className="flex items-center gap-3 px-5 py-3 bg-indigo-900 text-indigo-100 rounded-2xl border border-indigo-800 shadow-lg">
         <Lock size={16} className="shrink-0" />
-        <p className="text-[10px] font-black uppercase tracking-[0.1em]">
-          Este histórico é <span className="text-white underline">IMUTÁVEL</span>. Correções geram novos eventos de retificação para garantir integridade jurídica.
+        <p className="text-xs font-bold">
+          Este histórico é <span className="text-white underline font-black">IMUTÁVEL</span>. Correções geram novos eventos de retificação para garantir integridade jurídica.
         </p>
       </div>
 

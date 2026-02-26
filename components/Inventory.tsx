@@ -4,10 +4,12 @@ import { RiskType } from '../types';
 import { 
   Plus, Filter, Download, MoreVertical, RotateCcw, Zap, ArrowDown, 
   Calendar, ShieldAlert, AlertTriangle, FileText, Search, ChevronRight, 
-  Eye, X, CheckCircle2, History, Ban, Settings2, LayoutGrid, Info
+  Eye, CheckCircle2, History, Ban, Settings2, LayoutGrid, Info
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useAppData } from '../appData';
+import Button from './Button';
+import Modal from './Modal';
 
 interface InventoryProps {
   vision?: 'tech' | 'exec';
@@ -105,28 +107,30 @@ const Inventory: React.FC<InventoryProps> = ({ vision = 'tech' }) => {
   const isValid = (date: string) => new Date(date) > new Date();
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-20">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       {/* Page Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-black text-slate-800 tracking-tight">Gestão de Inventário de Riscos</h2>
-          <p className="text-slate-500 text-sm font-medium">Controle vivo de perigos e rastreabilidade total conforme NR-01.</p>
+          <h2 className="text-2xl font-bold text-slate-900">Gestão de Inventário de Riscos</h2>
+          <p className="text-slate-500 text-sm mt-1">Controle vivo de perigos e rastreabilidade total conforme NR-01</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button 
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
             onClick={() => setShowChangeModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-700 shadow-lg shadow-rose-200 transition-all border border-rose-500"
+            variant="danger"
+            size="md"
+            icon={<Zap size={16} />}
           >
-            <Zap size={16} />
-            Mudar Processo (Gatilho PGR)
-          </button>
-          <button 
+            Mudança de Processo
+          </Button>
+          <Button
             onClick={() => setShowRiskModal(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all border border-indigo-500"
+            variant="primary"
+            size="md"
+            icon={<Plus size={16} />}
           >
-            <Plus size={16} />
             Novo Risco
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -138,64 +142,60 @@ const Inventory: React.FC<InventoryProps> = ({ vision = 'tech' }) => {
           { label: 'Revisão Vencida', value: '03', color: 'text-amber-600', icon: <AlertTriangle size={18}/> },
           { label: 'Riscos Psicossociais', value: '12', color: 'text-indigo-600', icon: <Zap size={18}/> },
         ].map((card, i) => (
-          <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div className={`w-12 h-12 rounded-2xl bg-slate-50 ${card.color} flex items-center justify-center`}>
+          <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 hover:shadow-md hover:border-slate-300 transition-all">
+            <div className={`w-11 h-11 rounded-xl bg-slate-50 ${card.color} flex items-center justify-center shrink-0`}>
               {card.icon}
             </div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.1em]">{card.label}</p>
-              <p className={`text-xl font-black ${card.color}`}>{card.value}</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-0.5">{card.label}</p>
+              <p className={`text-2xl font-black ${card.color}`}>{card.value}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
-        <div className="relative flex-1 min-w-[280px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Pesquisar risco, setor, fonte ou unidade..." 
-            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all"
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter">
-            <option>Unidade</option>
-            <option>Planta Norte</option>
-            <option>Escritório Central</option>
-          </select>
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter">
-            <option>Categoria</option>
-            {Object.values(RiskType).map(v => <option key={v}>{v}</option>)}
-          </select>
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter">
-            <option>Nível</option>
-            <option>Crítico</option>
-            <option>Moderado</option>
-            <option>Tolerável</option>
-          </select>
-          <select className="text-[10px] font-black text-slate-500 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none uppercase tracking-tighter">
-            <option>Status Revisão</option>
-            <option>Em Dia</option>
-            <option>Vencendo</option>
-            <option>Vencido</option>
-          </select>
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Pesquisar risco, setor, fonte ou unidade..." 
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <select className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none hover:border-slate-300 transition-colors cursor-pointer">
+              <option>Unidade</option>
+              <option>Planta Norte</option>
+              <option>Escritório Central</option>
+            </select>
+            <select className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none hover:border-slate-300 transition-colors cursor-pointer">
+              <option>Categoria</option>
+              {Object.values(RiskType).map(v => <option key={v}>{v}</option>)}
+            </select>
+            <select className="text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 outline-none hover:border-slate-300 transition-colors cursor-pointer">
+              <option>Nível</option>
+              <option>Crítico</option>
+              <option>Moderado</option>
+              <option>Tolerável</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Risks Table Area */}
-      <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50/50 text-[10px] uppercase tracking-widest text-slate-400 font-black border-b border-slate-100">
-                <th className="px-6 py-5">Risco / Categoria</th>
-                <th className="px-6 py-5">Unidade / Setor</th>
-                <th className="px-6 py-5">Severidade Atual</th>
-                <th className="px-6 py-5">Mitigação</th>
-                <th className="px-6 py-5">Periodicidade</th>
+              <tr className="bg-slate-50 text-xs font-semibold text-slate-600 border-b border-slate-200">
+                <th className="px-6 py-4">Risco / Categoria</th>
+                <th className="px-6 py-4">Unidade / Setor</th>
+                <th className="px-6 py-4">Severidade</th>
+                <th className="px-6 py-4">Mitigação</th>
+                <th className="px-6 py-4">Periodicidade</th>
                 <th className="px-6 py-5 text-right">Ações</th>
               </tr>
             </thead>
