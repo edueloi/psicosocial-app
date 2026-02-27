@@ -176,7 +176,7 @@ export interface Unit {
 
 
 
-export type AppModuleId = 'dashboard' | 'inventory' | 'actions' | 'psychosocial' | 'audit' | 'timeline' | 'users' | 'units' | 'forms' | 'operations' | 'reports';
+export type AppModuleId = 'dashboard' | 'inventory' | 'actions' | 'psychosocial' | 'audit' | 'timeline' | 'users' | 'units' | 'forms' | 'operations' | 'reports' | 'permissions';
 
 export interface ModulePermissions {
   view: boolean;
@@ -201,4 +201,19 @@ export interface UserProfileSettings {
   roleTitle: string;
   department: string;
   bio: string;
+}
+
+
+export interface PermissionProfile {
+  id: string;
+  name: string;
+  parentId?: string | null;
+  access: {
+    externalBlocked: boolean;
+    startTime: string;
+    endTime: string;
+    simultaneousBlocked: boolean;
+    sessionExpirationMin: number;
+  };
+  permissions: Record<AppModuleId, ModulePermissions>;
 }

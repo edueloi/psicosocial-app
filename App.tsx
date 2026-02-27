@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MOCK_USERS, MOCK_TENANTS } from './constants';
-import { AppModuleId, ModulePermissions, User, Tenant, UserPreferences, UserProfileSettings } from './types';
+import { AppModuleId, ModulePermissions, PermissionProfile, User, Tenant, UserPreferences, UserProfileSettings } from './types';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
@@ -13,6 +13,7 @@ import AuditReadiness from './components/AuditReadiness';
 import ComplianceTimeline from './components/ComplianceTimeline';
 import FormsCenter from './components/FormsCenter';
 import OperationsHub from './components/OperationsHub';
+import PermissionsModule from './components/PermissionsModule';
 import { AppDataProvider } from './appData';
 
 const SETTINGS_STORAGE_KEY = 'settings-profile-v2';
@@ -29,7 +30,41 @@ const defaultPermissions = (): Record<AppModuleId, ModulePermissions> => ({
   forms: { view: true, create: true, edit: true, delete: true, export: true },
   operations: { view: true, create: true, edit: true, delete: true, export: true },
   reports: { view: true, create: false, edit: false, delete: false, export: true },
+  permissions: { view: true, create: false, edit: true, delete: false, export: true },
 });
+
+const defaultPermissionProfiles = (): PermissionProfile[] => [
+  {
+    id: 'pf-admin',
+    name: 'Administrador',
+    parentId: null,
+    access: {
+      externalBlocked: false,
+      startTime: '00:00',
+      endTime: '23:59',
+      simultaneousBlocked: false,
+      sessionExpirationMin: 240,
+    },
+    permissions: defaultPermissions(),
+  },
+  {
+    id: 'pf-consultor',
+    name: 'Consultor SST',
+    parentId: 'pf-admin',
+    access: {
+      externalBlocked: false,
+      startTime: '07:00',
+      endTime: '19:00',
+      simultaneousBlocked: true,
+      sessionExpirationMin: 180,
+    },
+    permissions: {
+      ...defaultPermissions(),
+      users: { view: false, create: false, edit: false, delete: false, export: false },
+      permissions: { view: false, create: false, edit: false, delete: false, export: false },
+    },
+  },
+];
 
 const defaultPreferences: UserPreferences = {
   language: 'pt-BR',
@@ -63,6 +98,7 @@ const App: React.FC = () => {
       return { ...defaultPreferences, ...parsed.preferences };
     } catch { return defaultPreferences; }
   });
+
   const [profile, setProfile] = useState<UserProfileSettings>(() => {
     if (typeof window === 'undefined') return defaultProfile;
     try {
@@ -72,19 +108,40 @@ const App: React.FC = () => {
       return { ...defaultProfile, ...parsed.profile };
     } catch { return defaultProfile; }
   });
-  const [permissions, setPermissions] = useState<Record<AppModuleId, ModulePermissions>>(() => {
-    if (typeof window === 'undefined') return defaultPermissions();
+
+  const [permissionProfiles, setPermissionProfiles] = useState<PermissionProfile[]>(() => {
+    if (typeof window === 'undefined') return defaultPermissionProfiles();
     try {
       const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (!raw) return defaultPermissions();
+      if (!raw) return defaultPermissionProfiles();
       const parsed = JSON.parse(raw);
-      return { ...defaultPermissions(), ...parsed.permissions };
-    } catch { return defaultPermissions(); }
+      return Array.isArray(parsed.permissionProfiles) && parsed.permissionProfiles.length
+        ? parsed.permissionProfiles
+        : defaultPermissionProfiles();
+    } catch { return defaultPermissionProfiles(); }
   });
 
+  const [selectedPermissionProfileId, setSelectedPermissionProfileId] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'pf-admin';
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return 'pf-admin';
+      const parsed = JSON.parse(raw);
+      return parsed.selectedPermissionProfileId || 'pf-admin';
+    } catch { return 'pf-admin'; }
+  });
+
+  const activePermissionProfile = permissionProfiles.find(p => p.id === selectedPermissionProfileId) || permissionProfiles[0];
+  const activePermissions = activePermissionProfile?.permissions || defaultPermissions();
+
   React.useEffect(() => {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ preferences, profile, permissions }));
-  }, [preferences, profile, permissions]);
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
+      preferences,
+      profile,
+      permissionProfiles,
+      selectedPermissionProfileId,
+    }));
+  }, [preferences, profile, permissionProfiles, selectedPermissionProfileId]);
 
   const logout = () => {
     setCurrentUser(null);
@@ -95,6 +152,29 @@ const App: React.FC = () => {
     setCurrentUser(user);
     const tenant = MOCK_TENANTS.find(t => t.id === user.tenantId) || null;
     setCurrentTenant(tenant);
+  };
+
+  const handleCreatePermissionProfile = (name: string, parentId?: string) => {
+    const parent = permissionProfiles.find(p => p.id === parentId);
+    const next: PermissionProfile = {
+      id: `pf-${Date.now()}`,
+      name,
+      parentId: parentId || null,
+      access: parent?.access || {
+        externalBlocked: false,
+        startTime: '00:00',
+        endTime: '23:59',
+        simultaneousBlocked: false,
+        sessionExpirationMin: 240,
+      },
+      permissions: parent?.permissions || defaultPermissions(),
+    };
+    setPermissionProfiles(prev => [next, ...prev]);
+    setSelectedPermissionProfileId(next.id);
+  };
+
+  const handleUpdatePermissionProfile = (id: string, patch: Partial<Omit<PermissionProfile, 'id'>>) => {
+    setPermissionProfiles(prev => prev.map(profileItem => profileItem.id === id ? { ...profileItem, ...patch } : profileItem));
   };
 
   if (!currentUser) {
@@ -122,13 +202,14 @@ const App: React.FC = () => {
 
   const noAccessMessage = preferences.language === 'en-US' ? 'You do not have permission to view this module.' : preferences.language === 'es-ES' ? 'No tienes permiso para ver este módulo.' : 'Você não tem permissão para visualizar este módulo.';
   const renderContent = () => {
-    if (!permissions[activeTab]?.view) return <div className="p-10 text-center text-rose-500 font-semibold">{noAccessMessage}</div>;
+    if (!activePermissions[activeTab]?.view) return <div className="p-10 text-center text-rose-500 font-semibold">{noAccessMessage}</div>;
 
     switch (activeTab) {
       case 'dashboard': return <Dashboard vision={vision} />;
       case 'inventory': return <Inventory vision={vision} />;
       case 'actions': return <ActionPlan />;
       case 'psychosocial': return <PsychosocialModule vision={vision} />;
+      case 'permissions': return <PermissionsModule profiles={permissionProfiles} selectedProfileId={selectedPermissionProfileId} onSelectProfile={setSelectedPermissionProfileId} onCreateProfile={handleCreatePermissionProfile} onUpdateProfile={handleUpdatePermissionProfile} />;
       case 'reports': return <Reports />;
       case 'users': return <UsersModule />;
       case 'units': return <UnitsModule />;
@@ -154,8 +235,7 @@ const App: React.FC = () => {
         setPreferences={setPreferences}
         profile={profile}
         setProfile={setProfile}
-        permissions={permissions}
-        setPermissions={setPermissions}
+        permissions={activePermissions}
       >
         {renderContent()}
       </Layout>
