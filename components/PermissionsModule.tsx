@@ -1,13 +1,17 @@
 import React from 'react';
-import { KeyRound, Plus, Search, ShieldCheck } from 'lucide-react';
-import { AppModuleId, ModulePermissions, PermissionProfile } from '../types';
+import { Building2, KeyRound, Plus, Search, ShieldCheck } from 'lucide-react';
+import { AppModuleId, ClientCompany, ModulePermissions, PermissionProfile } from '../types';
 
 interface PermissionsModuleProps {
   profiles: PermissionProfile[];
+  clientCompanies: ClientCompany[];
+  companyProfileMap: Record<string, string>;
   selectedProfileId: string;
   onSelectProfile: (id: string) => void;
   onCreateProfile: (name: string, parentId?: string) => void;
   onUpdateProfile: (id: string, patch: Partial<Omit<PermissionProfile, 'id'>>) => void;
+  onAssignProfileToCompany: (companyId: string, profileId: string) => void;
+  onCreateClientCompany: (name: string, defaultProfileId?: string) => void;
 }
 
 const moduleLabels: Record<AppModuleId, string> = {
@@ -42,18 +46,23 @@ const actionLabels: Record<keyof ModulePermissions, string> = {
 
 const PermissionsModule: React.FC<PermissionsModuleProps> = ({
   profiles,
+  clientCompanies,
+  companyProfileMap,
   selectedProfileId,
   onSelectProfile,
   onCreateProfile,
   onUpdateProfile,
+  onAssignProfileToCompany,
+  onCreateClientCompany,
 }) => {
   const [newProfileName, setNewProfileName] = React.useState('');
   const [parentProfileId, setParentProfileId] = React.useState('');
   const [profileSearch, setProfileSearch] = React.useState('');
   const [permissionSearch, setPermissionSearch] = React.useState('');
+  const [newCompanyName, setNewCompanyName] = React.useState('');
+  const [companyError, setCompanyError] = React.useState<string | null>(null);
 
   const selectedProfile = profiles.find(p => p.id === selectedProfileId) || profiles[0];
-
   const filteredProfiles = profiles.filter(p => p.name.toLowerCase().includes(profileSearch.toLowerCase()));
 
   const togglePermission = (moduleId: AppModuleId, action: keyof ModulePermissions) => {
@@ -68,6 +77,25 @@ const PermissionsModule: React.FC<PermissionsModuleProps> = ({
     onUpdateProfile(selectedProfile.id, { permissions: nextPermissions });
   };
 
+
+  const handleCreateClientCompany = () => {
+    const trimmed = newCompanyName.trim();
+    if (!trimmed) return;
+
+    const companyAlreadyExists = clientCompanies.some(
+      company => company.name.trim().toLowerCase() === trimmed.toLowerCase(),
+    );
+
+    if (companyAlreadyExists) {
+      setCompanyError('Esta empresa cliente já está cadastrada.');
+      return;
+    }
+
+    onCreateClientCompany(trimmed, selectedProfile?.id);
+    setCompanyError(null);
+    setNewCompanyName('');
+  };
+
   const handleCreateProfile = () => {
     const trimmed = newProfileName.trim();
     if (!trimmed) return;
@@ -77,16 +105,16 @@ const PermissionsModule: React.FC<PermissionsModuleProps> = ({
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-5 pb-10">
-      <aside className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-        <h3 className="font-black text-slate-900 text-lg mb-3">Perfis de acesso</h3>
-        <div className="flex gap-2 mb-2">
-          <div className="relative flex-1">
+      <aside className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-4">
+        <div>
+          <h3 className="font-black text-slate-900 text-lg mb-3">Perfis de acesso</h3>
+          <div className="relative">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input value={profileSearch} onChange={(e) => setProfileSearch(e.target.value)} placeholder="Buscar perfil" className="w-full rounded-xl border border-slate-300 pl-8 pr-3 py-2 text-sm" />
           </div>
         </div>
 
-        <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
           {filteredProfiles.map((profile) => (
             <button
               key={profile.id}
@@ -98,7 +126,7 @@ const PermissionsModule: React.FC<PermissionsModuleProps> = ({
           ))}
         </div>
 
-        <div className="mt-4 pt-4 border-t border-slate-200 space-y-2">
+        <div className="pt-4 border-t border-slate-200 space-y-2">
           <input value={newProfileName} onChange={(e) => setNewProfileName(e.target.value)} placeholder="Nome do novo perfil" className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm" />
           <select value={parentProfileId} onChange={(e) => setParentProfileId(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
             <option value="">Sem perfil pai</option>
@@ -119,6 +147,43 @@ const PermissionsModule: React.FC<PermissionsModuleProps> = ({
           <span className="text-xs px-2.5 py-1 rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 font-semibold flex items-center gap-1">
             <ShieldCheck size={13} /> Controle avançado
           </span>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-black text-slate-800 flex items-center gap-2"><Building2 size={15} /> Permissão padrão por empresa cliente</p>
+            <div className="flex gap-2 w-full max-w-md">
+              <input
+                value={newCompanyName}
+                onChange={(e) => setNewCompanyName(e.target.value)}
+                placeholder="Adicionar empresa cliente"
+                className="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-xs"
+              />
+              <button
+                onClick={handleCreateClientCompany}
+                className="rounded-xl bg-violet-600 text-white text-xs font-semibold px-3 py-2 hover:bg-violet-700"
+              >
+                Adicionar
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {clientCompanies.map((company) => (
+              <label key={company.id} className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700 flex items-center justify-between gap-3">
+                <span>{company.name}</span>
+                <select
+                  value={companyProfileMap[company.id] || ''}
+                  onChange={(e) => onAssignProfileToCompany(company.id, e.target.value)}
+                  className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+                >
+                  <option value="">Sem perfil padrão</option>
+                  {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </label>
+            ))}
+          </div>
+          {companyError && <p className="text-xs font-semibold text-rose-600">{companyError}</p>}
         </div>
 
         {selectedProfile && (

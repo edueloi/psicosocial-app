@@ -13,9 +13,61 @@ interface PsychosocialProps {
   vision?: 'tech' | 'exec';
 }
 
+interface SurveyDraft {
+  type: string;
+  target: string;
+  cadence: string;
+  dueDate: string;
+  anonymous: boolean;
+  notes: string;
+}
+
+interface IncidentDraft {
+  nature: string;
+  sector: string;
+  severity: 'Baixa' | 'Média' | 'Alta' | 'Crítica';
+  anonymous: boolean;
+  facts: string;
+}
+
 const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) => {
   const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [showIncidentModal, setShowIncidentModal] = useState(false);
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [surveyError, setSurveyError] = useState<string | null>(null);
+  const [incidentError, setIncidentError] = useState<string | null>(null);
+  const [trainingError, setTrainingError] = useState<string | null>(null);
+  const [lastCreatedSurvey, setLastCreatedSurvey] = useState<{ type: string; target: string; createdAt: string } | null>(null);
+  const [lastCreatedIncident, setLastCreatedIncident] = useState<{ nature: string; sector: string; severity: string; createdAt: string } | null>(null);
+
+  const [surveyDraft, setSurveyDraft] = useState<SurveyDraft>({
+    type: 'Diagnóstico de Clima Organizacional',
+    target: 'Toda a Empresa',
+    cadence: 'Mensal',
+    dueDate: '',
+    anonymous: true,
+    notes: '',
+  });
+
+  const [incidentDraft, setIncidentDraft] = useState<IncidentDraft>({
+    nature: 'Sobrecarga de Trabalho / Stress',
+    sector: 'Comercial',
+    severity: 'Alta',
+    anonymous: true,
+    facts: '',
+  });
+
+  const [trainingDraft, setTrainingDraft] = useState({
+    title: 'Treinamento de Escuta Ativa para Liderança',
+    audience: 'Liderança Produção',
+    date: '',
+    durationHours: 2,
+    facilitator: 'Psicóloga Organizacional',
+  });
+
+  const [recentWorkflows, setRecentWorkflows] = useState<Array<{ id: string; type: 'survey' | 'incident' | 'training'; title: string; owner: string; dueDate: string; status: string }>>([]);
+
   const { addAction, navigate } = useAppData();
 
   const handleLinkToPgr = () => {
@@ -74,6 +126,101 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
     { label: 'Triagens com sinal de atenção', value: '118', note: 'Encaminhamento preventivo' },
     { label: 'Planos de ação abertos', value: '27', note: 'Vinculados ao PGR psicossocial' },
   ];
+
+  const submitSurvey = () => {
+    if (!surveyDraft.type || !surveyDraft.target || !surveyDraft.dueDate) {
+      setSurveyError('Preencha tipo, unidade/setor alvo e data limite.');
+      return;
+    }
+    setSurveyError(null);
+    setLastCreatedSurvey({ type: surveyDraft.type, target: surveyDraft.target, createdAt: new Date().toLocaleString('pt-BR') });
+    setRecentWorkflows(prev => [{ id: `wf-${Date.now()}`, type: 'survey', title: surveyDraft.type, owner: 'RH / SST', dueDate: surveyDraft.dueDate, status: 'Coleta iniciada' }, ...prev.slice(0, 4)]);
+    setShowSurveyModal(false);
+  };
+
+  const submitIncident = () => {
+    if (!incidentDraft.facts.trim()) {
+      setIncidentError('Descreva os fatos observados para registrar o incidente.');
+      return;
+    }
+
+    setIncidentError(null);
+    setLastCreatedIncident({
+      nature: incidentDraft.nature,
+      sector: incidentDraft.sector,
+      severity: incidentDraft.severity,
+      createdAt: new Date().toLocaleString('pt-BR'),
+    });
+
+    addAction({
+      id: `a-inc-${Date.now()}`,
+      title: `Investigação psicossocial: ${incidentDraft.nature}`,
+      responsible: 'RH / SST',
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      status: ActionStatus.PENDING,
+      desc: incidentDraft.facts,
+      riskId: 'r-psi-inc',
+      riskName: incidentDraft.nature,
+      riskCategory: RiskType.PSYCHOSOCIAL,
+      riskLevel: incidentDraft.severity,
+      actionType: ActionType.PSYCHOSOCIAL,
+      expectedImpact: 'Mitigar recorrência e reduzir impacto psicossocial',
+      evidenceCount: 0,
+    });
+
+    setShowIncidentModal(false);
+
+    setRecentWorkflows(prev => [
+      {
+        id: `wf-${Date.now()}`,
+        type: 'incident',
+        title: incidentDraft.nature,
+        owner: 'RH / SST',
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+        status: 'Registrado',
+      },
+      ...prev.slice(0, 4),
+    ]);
+  };
+
+
+  const submitTraining = () => {
+    if (!trainingDraft.date || !trainingDraft.audience || !trainingDraft.facilitator) {
+      setTrainingError('Preencha público, data e facilitador para agendar o treinamento.');
+      return;
+    }
+
+    setTrainingError(null);
+    addAction({
+      id: `a-tr-${Date.now()}`,
+      title: trainingDraft.title,
+      responsible: trainingDraft.facilitator,
+      dueDate: trainingDraft.date,
+      status: ActionStatus.PENDING,
+      desc: `Treinamento para ${trainingDraft.audience} com duração de ${trainingDraft.durationHours}h.`,
+      riskId: 'r-psi-training',
+      riskName: 'Baixo suporte da liderança',
+      riskCategory: RiskType.PSYCHOSOCIAL,
+      riskLevel: 'Moderado',
+      actionType: ActionType.TRAINING,
+      expectedImpact: 'Melhoria de clima e redução de conflito interpessoal',
+      evidenceCount: 0,
+    });
+
+    setRecentWorkflows(prev => [
+      {
+        id: `wf-${Date.now()}`,
+        type: 'training',
+        title: trainingDraft.title,
+        owner: trainingDraft.facilitator,
+        dueDate: trainingDraft.date,
+        status: 'Agendado',
+      },
+      ...prev.slice(0, 4),
+    ]);
+
+    setShowTrainingModal(false);
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
@@ -371,10 +518,10 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
               Detectamos que 40% dos colaboradores da produção sentem baixo suporte da liderança. Sugerimos trilha de escuta ativa e canal de suporte individual.
             </p>
             <div className="flex gap-3">
-              <button className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
+              <button onClick={() => setShowTrainingModal(true)} className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
                 Agendar Treinamento
               </button>
-              <button className="px-6 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
+              <button onClick={() => setShowReportModal(true)} className="px-6 py-3.5 bg-white border border-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all">
                 Ver Laudo
               </button>
             </div>
@@ -382,24 +529,63 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
         </div>
       </div>
 
-      {/* Survey Modal Placeholder */}
+
+      {(lastCreatedSurvey || lastCreatedIncident) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {lastCreatedSurvey && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-[10px] font-black uppercase tracking-wider text-emerald-700">Pesquisa criada</p>
+              <p className="text-sm font-semibold text-emerald-900 mt-1">{lastCreatedSurvey.type}</p>
+              <p className="text-xs text-emerald-800">Alvo: {lastCreatedSurvey.target}</p>
+              <p className="text-xs text-emerald-700 mt-1">{lastCreatedSurvey.createdAt}</p>
+            </div>
+          )}
+          {lastCreatedIncident && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-[10px] font-black uppercase tracking-wider text-rose-700">Incidente registrado</p>
+              <p className="text-sm font-semibold text-rose-900 mt-1">{lastCreatedIncident.nature}</p>
+              <p className="text-xs text-rose-800">Setor: {lastCreatedIncident.sector} · Severidade: {lastCreatedIncident.severity}</p>
+              <p className="text-xs text-rose-700 mt-1">{lastCreatedIncident.createdAt}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      <section className="bg-white rounded-2xl border border-slate-200 p-4">
+        <h4 className="text-sm font-black text-slate-800 mb-3">Workflows recentes do psicossocial</h4>
+        {recentWorkflows.length === 0 ? (
+          <p className="text-xs text-slate-500">Nenhum workflow iniciado ainda.</p>
+        ) : (
+          <div className="space-y-2">
+            {recentWorkflows.map((item) => (
+              <div key={item.id} className="rounded-xl border border-slate-200 px-3 py-2 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{item.title}</p>
+                  <p className="text-xs text-slate-500">Responsável: {item.owner} · Prazo: {item.dueDate}</p>
+                </div>
+                <span className="text-[11px] px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-700">{item.status}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Survey Modal */}
       {showSurveyModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+          <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className="p-6 bg-indigo-600 text-white flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <BrainCircuit size={24} />
                 <h3 className="text-xl font-black uppercase tracking-tight">Nova Pesquisa Psicossocial</h3>
               </div>
-              <button onClick={() => setShowSurveyModal(false)} className="hover:rotate-90 transition-transform">
-                <X size={24} />
-              </button>
+              <button onClick={() => setShowSurveyModal(false)} className="hover:rotate-90 transition-transform"><X size={24} /></button>
             </div>
-            <div className="p-8 space-y-6">
-              <div className="space-y-4">
+            <div className="p-8 space-y-5">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Tipo de Avaliação</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                  <select value={surveyDraft.type} onChange={(e) => setSurveyDraft(prev => ({ ...prev, type: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
                     <option>Diagnóstico de Clima Organizacional</option>
                     <option>Avaliação de Carga Mental de Trabalho</option>
                     <option>Pesquisa de Qualidade de Liderança</option>
@@ -408,52 +594,112 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Unidades/Setores Alvo</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                  <select value={surveyDraft.target} onChange={(e) => setSurveyDraft(prev => ({ ...prev, target: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
                     <option>Toda a Empresa</option>
                     <option>Planta Norte - Somente Produção</option>
+                    <option>Comercial + Logística</option>
                   </select>
                 </div>
-                <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                  <ShieldCheck size={20} className="text-indigo-600 shrink-0" />
-                  <p className="text-[10px] text-indigo-900 font-bold uppercase leading-relaxed">
-                    Pesquisa será realizada de forma <span className="underline">Totalmente Anônima</span> conforme diretrizes de ética e LGPD.
-                  </p>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Frequência</label>
+                  <select value={surveyDraft.cadence} onChange={(e) => setSurveyDraft(prev => ({ ...prev, cadence: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                    <option>Semanal</option>
+                    <option>Quinzenal</option>
+                    <option>Mensal</option>
+                    <option>Trimestral</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Data limite da coleta</label>
+                  <input type="date" value={surveyDraft.dueDate} onChange={(e) => setSurveyDraft(prev => ({ ...prev, dueDate: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Observações da campanha</label>
+                  <textarea value={surveyDraft.notes} onChange={(e) => setSurveyDraft(prev => ({ ...prev, notes: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium outline-none h-24 resize-none" placeholder="Objetivo, público e estratégia de comunicação..." />
                 </div>
               </div>
-              <div className="flex gap-4 pt-4">
-                <button onClick={() => setShowSurveyModal(false)} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">
-                  Cancelar
-                </button>
-                <button 
-                  onClick={() => setShowSurveyModal(false)}
-                  className="flex-1 px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
-                >
-                  Iniciar Coleta
-                </button>
+
+              <label className="flex items-center justify-between gap-3 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                <p className="text-[10px] text-indigo-900 font-bold uppercase leading-relaxed">Aplicar anonimização LGPD em toda a coleta</p>
+                <input type="checkbox" checked={surveyDraft.anonymous} onChange={(e) => setSurveyDraft(prev => ({ ...prev, anonymous: e.target.checked }))} />
+              </label>
+
+              {surveyError && <p className="text-sm text-rose-600 font-semibold">{surveyError}</p>}
+
+              <div className="flex gap-4 pt-2">
+                <button onClick={() => setShowSurveyModal(false)} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">Cancelar</button>
+                <button onClick={submitSurvey} className="flex-1 px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all">Iniciar Coleta</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Incident Modal Placeholder */}
+      {/* Incident Modal */}
+
+      {showTrainingModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div className="p-6 bg-amber-600 text-white flex items-center justify-between">
+              <h3 className="text-xl font-black uppercase tracking-tight">Agendar Treinamento Psicossocial</h3>
+              <button onClick={() => setShowTrainingModal(false)} className="hover:rotate-90 transition-transform"><X size={24} /></button>
+            </div>
+            <div className="p-8 space-y-4">
+              <input value={trainingDraft.title} onChange={(e) => setTrainingDraft(prev => ({ ...prev, title: e.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold" placeholder="Título do treinamento" />
+              <div className="grid md:grid-cols-2 gap-3">
+                <input value={trainingDraft.audience} onChange={(e) => setTrainingDraft(prev => ({ ...prev, audience: e.target.value }))} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold" placeholder="Público-alvo" />
+                <input value={trainingDraft.facilitator} onChange={(e) => setTrainingDraft(prev => ({ ...prev, facilitator: e.target.value }))} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold" placeholder="Facilitador" />
+                <input type="date" value={trainingDraft.date} onChange={(e) => setTrainingDraft(prev => ({ ...prev, date: e.target.value }))} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold" />
+                <input type="number" min={1} max={8} value={trainingDraft.durationHours} onChange={(e) => setTrainingDraft(prev => ({ ...prev, durationHours: Number(e.target.value) || 1 }))} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold" placeholder="Duração (h)" />
+              </div>
+              {trainingError && <p className="text-sm text-rose-600 font-semibold">{trainingError}</p>}
+              <div className="flex gap-3 pt-1">
+                <button onClick={() => setShowTrainingModal(false)} className="flex-1 px-4 py-3 bg-slate-100 rounded-2xl text-xs font-black uppercase">Cancelar</button>
+                <button onClick={submitTraining} className="flex-1 px-4 py-3 bg-amber-600 text-white rounded-2xl text-xs font-black uppercase">Confirmar Agendamento</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReportModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+            <div className="p-6 bg-slate-800 text-white flex items-center justify-between">
+              <h3 className="text-xl font-black uppercase tracking-tight">Laudo Técnico Psicossocial</h3>
+              <button onClick={() => setShowReportModal(false)} className="hover:rotate-90 transition-transform"><X size={24} /></button>
+            </div>
+            <div className="p-8 space-y-4 text-sm text-slate-700">
+              <p><span className="font-semibold">Hotspot identificado:</span> Liderança Produção</p>
+              <p><span className="font-semibold">Risco principal:</span> Baixo suporte da liderança e aumento de relatos de conflito.</p>
+              <p><span className="font-semibold">Recomendação:</span> trilha de treinamento em escuta ativa + rituais de feedback estruturado semanal.</p>
+              <p><span className="font-semibold">Prazo de reavaliação:</span> 45 dias após implementação.</p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+                Evidências correlatas: pesquisa Likert (Q3/Q4), 14 relatos em 30 dias, absenteísmo +8% no setor.
+              </div>
+              <div className="flex justify-end">
+                <button onClick={() => setShowReportModal(false)} className="px-5 py-2.5 rounded-xl bg-slate-800 text-white text-xs font-black uppercase">Fechar laudo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showIncidentModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+          <div className="bg-white rounded-[32px] w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
             <div className="p-6 bg-rose-600 text-white flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <AlertCircle size={24} />
                 <h3 className="text-xl font-black uppercase tracking-tight">Registro de Incidente</h3>
               </div>
-              <button onClick={() => setShowIncidentModal(false)} className="hover:rotate-90 transition-transform">
-                <X size={24} />
-              </button>
+              <button onClick={() => setShowIncidentModal(false)} className="hover:rotate-90 transition-transform"><X size={24} /></button>
             </div>
-            <div className="p-8 space-y-6">
-              <div className="space-y-4">
+            <div className="p-8 space-y-5">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Natureza do Relato</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                  <select value={incidentDraft.nature} onChange={(e) => setIncidentDraft(prev => ({ ...prev, nature: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
                     <option>Sobrecarga de Trabalho / Stress</option>
                     <option>Conflito Interpessoal / Gestão</option>
                     <option>Indício de Assédio Moral</option>
@@ -462,27 +708,33 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Setor Afetado</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                  <select value={incidentDraft.sector} onChange={(e) => setIncidentDraft(prev => ({ ...prev, sector: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
                     <option>Comercial</option>
                     <option>Logística</option>
                     <option>Produção</option>
+                    <option>Administrativo</option>
                   </select>
                 </div>
                 <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Severidade</label>
+                  <select value={incidentDraft.severity} onChange={(e) => setIncidentDraft(prev => ({ ...prev, severity: e.target.value as IncidentDraft['severity'] }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none">
+                    <option>Baixa</option><option>Média</option><option>Alta</option><option>Crítica</option>
+                  </select>
+                </div>
+                <label className="rounded-2xl border border-slate-200 p-4 text-xs font-semibold text-slate-700 flex items-center justify-between">Registro anônimo
+                  <input type="checkbox" checked={incidentDraft.anonymous} onChange={(e) => setIncidentDraft(prev => ({ ...prev, anonymous: e.target.checked }))} />
+                </label>
+                <div className="md:col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Fatos Observados</label>
-                  <textarea className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium outline-none h-24 resize-none" placeholder="Relato técnico dos fatos..." />
+                  <textarea value={incidentDraft.facts} onChange={(e) => setIncidentDraft(prev => ({ ...prev, facts: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-medium outline-none h-24 resize-none" placeholder="Relato técnico dos fatos, pessoas envolvidas e impacto percebido..." />
                 </div>
               </div>
-              <div className="flex gap-4 pt-4">
-                <button onClick={() => setShowIncidentModal(false)} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">
-                  Cancelar
-                </button>
-                <button 
-                  onClick={() => setShowIncidentModal(false)}
-                  className="flex-1 px-8 py-4 bg-rose-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-rose-700 shadow-xl shadow-rose-200 transition-all"
-                >
-                  Registrar Evento
-                </button>
+
+              {incidentError && <p className="text-sm text-rose-600 font-semibold">{incidentError}</p>}
+
+              <div className="flex gap-4 pt-2">
+                <button onClick={() => setShowIncidentModal(false)} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">Cancelar</button>
+                <button onClick={submitIncident} className="flex-1 px-8 py-4 bg-rose-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-rose-700 shadow-xl shadow-rose-200 transition-all">Registrar Evento</button>
               </div>
             </div>
           </div>

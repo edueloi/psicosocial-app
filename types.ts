@@ -72,6 +72,13 @@ export interface User {
   lastAccess?: string;
   lastIp?: string;
   device?: string;
+  permissionProfileId?: string;
+  clientCompanyId?: string;
+}
+
+export interface ClientCompany {
+  id: string;
+  name: string;
 }
 
 export interface RiskHistoryEntry {
@@ -216,4 +223,10 @@ export interface PermissionProfile {
     sessionExpirationMin: number;
   };
   permissions: Record<AppModuleId, ModulePermissions>;
+}
+
+
+export interface CompanyPermissionAssignment {
+  companyId: string;
+  permissionProfileId: string;
 }

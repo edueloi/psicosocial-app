@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MOCK_USERS, MOCK_TENANTS } from './constants';
-import { AppModuleId, ModulePermissions, PermissionProfile, User, Tenant, UserPreferences, UserProfileSettings } from './types';
+import { AppModuleId, ClientCompany, ModulePermissions, PermissionProfile, User, Tenant, UserPreferences, UserProfileSettings, UserStatus } from './types';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
@@ -74,6 +74,14 @@ const defaultPreferences: UserPreferences = {
   pushAlerts: true,
 };
 
+
+
+const defaultClientCompanies = (): ClientCompany[] => [
+  { id: 'c-yasaki', name: 'Yasaki' },
+  { id: 'c-toyota', name: 'Toyota 452' },
+  { id: 'c-usina', name: 'Usina Pilon' },
+];
+
 const defaultProfile: UserProfileSettings = {
   fullName: 'Admin Master',
   email: 'admin@laboral.com',
@@ -88,6 +96,89 @@ const App: React.FC = () => {
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(MOCK_TENANTS[0]);
   const [activeTab, setActiveTab] = useState<AppModuleId>('dashboard');
   const [vision, setVision] = useState<'tech' | 'exec'>('tech');
+  const [users, setUsers] = useState<User[]>(() => MOCK_USERS);
+  const [clientCompanies, setClientCompanies] = useState<ClientCompany[]>(() => defaultClientCompanies());
+  const [companyProfileMap, setCompanyProfileMap] = useState<Record<string, string>>({});
+
+  const [preferences, setPreferences] = useState<UserPreferences>(() => {
+    if (typeof window === 'undefined') return defaultPreferences;
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return defaultPreferences;
+      const parsed = JSON.parse(raw);
+      return { ...defaultPreferences, ...parsed.preferences };
+    } catch { return defaultPreferences; }
+  });
+
+  const [profile, setProfile] = useState<UserProfileSettings>(() => {
+    if (typeof window === 'undefined') return defaultProfile;
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return defaultProfile;
+      const parsed = JSON.parse(raw);
+      return { ...defaultProfile, ...parsed.profile };
+    } catch { return defaultProfile; }
+  });
+
+  const [permissionProfiles, setPermissionProfiles] = useState<PermissionProfile[]>(() => {
+    if (typeof window === 'undefined') return defaultPermissionProfiles();
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return defaultPermissionProfiles();
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed.permissionProfiles) && parsed.permissionProfiles.length
+        ? parsed.permissionProfiles
+        : defaultPermissionProfiles();
+    } catch { return defaultPermissionProfiles(); }
+  });
+
+  const [selectedPermissionProfileId, setSelectedPermissionProfileId] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'pf-admin';
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return 'pf-admin';
+      const parsed = JSON.parse(raw);
+      return parsed.selectedPermissionProfileId || 'pf-admin';
+    } catch { return 'pf-admin'; }
+  });
+
+  const activePermissionProfile =
+    permissionProfiles.find(p => p.id === currentUser?.permissionProfileId)
+    || permissionProfiles.find(p => p.id === selectedPermissionProfileId)
+    || permissionProfiles[0];
+  const activePermissions = activePermissionProfile?.permissions || defaultPermissions();
+
+  React.useEffect(() => {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
+      preferences,
+      profile,
+      permissionProfiles,
+      selectedPermissionProfileId,
+      users,
+      clientCompanies,
+      companyProfileMap,
+    }));
+  }, [preferences, profile, permissionProfiles, selectedPermissionProfileId, users, clientCompanies, companyProfileMap]);
+
+
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.users) && parsed.users.length) {
+        setUsers(parsed.users as User[]);
+      }
+      if (Array.isArray(parsed.clientCompanies) && parsed.clientCompanies.length) {
+        setClientCompanies(parsed.clientCompanies as ClientCompany[]);
+      }
+      if (parsed.companyProfileMap && typeof parsed.companyProfileMap === 'object') {
+        setCompanyProfileMap(parsed.companyProfileMap as Record<string, string>);
+      }
+    } catch {
+      // keep defaults
+    }
+  }, []);
 
   const [preferences, setPreferences] = useState<UserPreferences>(() => {
     if (typeof window === 'undefined') return defaultPreferences;
@@ -177,6 +268,23 @@ const App: React.FC = () => {
     setPermissionProfiles(prev => prev.map(profileItem => profileItem.id === id ? { ...profileItem, ...patch } : profileItem));
   };
 
+  const createClientCompany = (name: string, defaultProfileId?: string) => {
+    const normalizedName = name.trim();
+    if (!normalizedName) return;
+
+    const companyAlreadyExists = clientCompanies.some(
+      company => company.name.trim().toLowerCase() === normalizedName.toLowerCase(),
+    );
+
+    if (companyAlreadyExists) return;
+
+    const id = `c-${Date.now()}`;
+    setClientCompanies(prev => [{ id, name: normalizedName }, ...prev]);
+    if (defaultProfileId) {
+      setCompanyProfileMap(prev => ({ ...prev, [id]: defaultProfileId }));
+    }
+  };
+
   if (!currentUser) {
     const l = preferences.language;
     const title = l === 'en-US' ? 'Select a demo user' : l === 'es-ES' ? 'Selecciona un usuario de demostración' : 'Selecione um usuário para demonstração';
@@ -188,7 +296,7 @@ const App: React.FC = () => {
             <p className="text-slate-500">{title}</p>
           </div>
           <div className="space-y-4">
-            {MOCK_USERS.map(u => (
+            {users.map(u => (
               <button key={u.id} onClick={() => handleLogin(u)} className="w-full flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all group">
                 <div className="text-left"><p className="font-semibold text-slate-800">{u.name}</p><p className="text-xs text-slate-500 uppercase tracking-wider">{u.role}</p></div>
                 <div className="text-indigo-600 font-medium group-hover:translate-x-1 transition-transform">Entrar →</div>
@@ -209,9 +317,9 @@ const App: React.FC = () => {
       case 'inventory': return <Inventory vision={vision} />;
       case 'actions': return <ActionPlan />;
       case 'psychosocial': return <PsychosocialModule vision={vision} />;
-      case 'permissions': return <PermissionsModule profiles={permissionProfiles} selectedProfileId={selectedPermissionProfileId} onSelectProfile={setSelectedPermissionProfileId} onCreateProfile={handleCreatePermissionProfile} onUpdateProfile={handleUpdatePermissionProfile} />;
+      case 'permissions': return <PermissionsModule profiles={permissionProfiles} clientCompanies={clientCompanies} companyProfileMap={companyProfileMap} selectedProfileId={selectedPermissionProfileId} onSelectProfile={setSelectedPermissionProfileId} onCreateProfile={handleCreatePermissionProfile} onUpdateProfile={handleUpdatePermissionProfile} onAssignProfileToCompany={(companyId, profileId) => setCompanyProfileMap(prev => ({ ...prev, [companyId]: profileId }))} onCreateClientCompany={createClientCompany} />;
       case 'reports': return <Reports />;
-      case 'users': return <UsersModule />;
+      case 'users': return <UsersModule users={users} permissionProfiles={permissionProfiles} clientCompanies={clientCompanies} companyProfileMap={companyProfileMap} onCreateClientCompany={(name) => createClientCompany(name)} onCreateUser={(payload) => setUsers(prev => [{ ...payload, id: `u-${Date.now()}`, status: UserStatus.PENDING, tenantId: currentTenant?.id || 't1' }, ...prev])} onUpdateUserStatus={(userId, status) => setUsers(prev => prev.map((userItem) => userItem.id === userId ? { ...userItem, status } : userItem))} />;
       case 'units': return <UnitsModule />;
       case 'audit': return <AuditReadiness />;
       case 'timeline': return <ComplianceTimeline />;
