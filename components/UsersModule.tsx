@@ -30,6 +30,7 @@ const UsersModule: React.FC<UsersModuleProps> = ({ users, permissionProfiles, cl
   const [newCompanyName, setNewCompanyName] = useState('');
   const [selectedProfileId, setSelectedProfileId] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   const [draft, setDraft] = useState({
     name: '',
@@ -124,7 +125,10 @@ const UsersModule: React.FC<UsersModuleProps> = ({ users, permissionProfiles, cl
 
   const addClientCompany = () => {
     const name = newCompanyName.trim();
-    if (!name) return;
+    if (!name) {
+      setFormError('Digite o nome da empresa cliente para adicionar.');
+      return;
+    }
 
     const companyAlreadyExists = clientCompanies.some(
       company => company.name.trim().toLowerCase() === name.toLowerCase(),
@@ -137,6 +141,7 @@ const UsersModule: React.FC<UsersModuleProps> = ({ users, permissionProfiles, cl
 
     onCreateClientCompany(name);
     setFormError(null);
+    setInfoMessage(`Empresa ${name} adicionada com sucesso.`);
     setNewCompanyName('');
   };
 
@@ -188,8 +193,34 @@ const UsersModule: React.FC<UsersModuleProps> = ({ users, permissionProfiles, cl
           </select>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_160px] gap-2">
-          <input value={newCompanyName} onChange={(e) => setNewCompanyName(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm" placeholder="Adicionar empresa cliente" />
-          <button onClick={addClientCompany} className="px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-semibold">Adicionar</button>
+          <input
+            value={newCompanyName}
+            onChange={(e) => { setNewCompanyName(e.target.value); if (formError) setFormError(null); if (infoMessage) setInfoMessage(null); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') addClientCompany(); }}
+            className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+            placeholder="Adicionar empresa cliente"
+          />
+          <button onClick={addClientCompany} className="px-4 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition">Adicionar</button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+        <p className="text-sm font-black text-slate-800 mb-3 flex items-center gap-2"><Shield size={14} /> Governança de acesso por empresa</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+          {clientCompanies.map((company) => {
+            const defaultProfile = permissionProfiles.find((profile) => profile.id === companyProfileMap[company.id]);
+            const totalUsers = users.filter((user) => user.clientCompanyId === company.id).length;
+            return (
+              <div key={company.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-sm font-black text-slate-800">{company.name}</p>
+                <p className="text-xs text-slate-500 mt-1">Usuários vinculados: <span className="font-bold text-slate-700">{totalUsers}</span></p>
+                <p className="text-xs mt-2">
+                  <span className="font-bold text-slate-500 uppercase tracking-wide">Perfil padrão:</span>{' '}
+                  <span className="font-semibold text-indigo-700">{defaultProfile?.name || 'Não definido'}</span>
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -221,6 +252,7 @@ const UsersModule: React.FC<UsersModuleProps> = ({ users, permissionProfiles, cl
       </div>
 
       {formError && !showInviteModal && <p className="text-sm text-rose-600 font-semibold">{formError}</p>}
+      {infoMessage && !showInviteModal && <p className="text-sm text-emerald-600 font-semibold">{infoMessage}</p>}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-200 text-sm font-bold text-slate-700 grid grid-cols-12 gap-3">

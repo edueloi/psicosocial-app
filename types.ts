@@ -183,7 +183,7 @@ export interface Unit {
 
 
 
-export type AppModuleId = 'dashboard' | 'inventory' | 'actions' | 'psychosocial' | 'audit' | 'timeline' | 'users' | 'units' | 'forms' | 'operations' | 'reports' | 'permissions';
+export type AppModuleId = 'dashboard' | 'inventory' | 'actions' | 'psychosocial' | 'audit' | 'timeline' | 'users' | 'units' | 'forms' | 'operations' | 'documents' | 'reports' | 'permissions';
 
 export interface ModulePermissions {
   view: boolean;

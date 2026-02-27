@@ -24,9 +24,9 @@ interface LayoutProps {
 }
 
 const navLabels: Record<UserPreferences['language'], Record<string, string>> = {
-  'pt-BR': { dashboard: 'Dashboard', inventory: 'Gestão de Riscos', actions: 'Plano de Ação', psychosocial: 'Psicossocial', audit: 'Status Auditoria', timeline: 'Timeline NR-01', users: 'Usuários', units: 'Unidades', forms: 'Forms Externos', operations: 'Operação Mensal', permissions: 'Permissões', reports: 'Relatórios PGR' },
-  'en-US': { dashboard: 'Dashboard', inventory: 'Risk Management', actions: 'Action Plan', psychosocial: 'Psychosocial', audit: 'Audit Status', timeline: 'NR-01 Timeline', users: 'Users', units: 'Units', forms: 'External Forms', operations: 'Monthly Operations', permissions: 'Permissions', reports: 'PGR Reports' },
-  'es-ES': { dashboard: 'Panel', inventory: 'Gestión de Riesgos', actions: 'Plan de Acción', psychosocial: 'Psicosocial', audit: 'Estado de Auditoría', timeline: 'Línea de tiempo NR-01', users: 'Usuarios', units: 'Unidades', forms: 'Formularios Externos', operations: 'Operación Mensual', permissions: 'Permisos', reports: 'Reportes PGR' },
+  'pt-BR': { dashboard: 'Dashboard', inventory: 'Gestão de Riscos', actions: 'Plano de Ação', psychosocial: 'Psicossocial', audit: 'Status Auditoria', timeline: 'Timeline NR-01', users: 'Usuários', units: 'Unidades', forms: 'Forms Externos', operations: 'Operação Mensal', documents: 'Documentos', permissions: 'Permissões', reports: 'Relatórios PGR' },
+  'en-US': { dashboard: 'Dashboard', inventory: 'Risk Management', actions: 'Action Plan', psychosocial: 'Psychosocial', audit: 'Audit Status', timeline: 'NR-01 Timeline', users: 'Users', units: 'Units', forms: 'External Forms', operations: 'Monthly Operations', documents: 'Documents', permissions: 'Permissions', reports: 'PGR Reports' },
+  'es-ES': { dashboard: 'Panel', inventory: 'Gestión de Riesgos', actions: 'Plan de Acción', psychosocial: 'Psicosocial', audit: 'Estado de Auditoría', timeline: 'Línea de tiempo NR-01', users: 'Usuarios', units: 'Unidades', forms: 'Formularios Externos', operations: 'Operación Mensual', documents: 'Documentos', permissions: 'Permisos', reports: 'Reportes PGR' },
 };
 
 const textByLang = {
