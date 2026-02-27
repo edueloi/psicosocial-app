@@ -221,6 +221,7 @@ const OperationsHub: React.FC = () => {
   const [evidences, setEvidences] = React.useState<EvidenceItem[]>(initialState.evidences);
   const [campaigns, setCampaigns] = React.useState<CampaignItem[]>(initialState.campaigns);
   const [engineering, setEngineering] = React.useState<EngineeringReview[]>(initialState.engineering);
+  const [galleryItems] = React.useState<EvidenceGalleryItem[]>(initialEvidenceGallery);
 
   const adherence = Math.round((presentCount / targetPeople) * 100);
   const portalLink = 'https://portal.nr01master.com/cliente-view/atividade';
