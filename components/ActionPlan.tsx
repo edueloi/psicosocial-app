@@ -58,7 +58,7 @@ const normalizeStatus = (status: ActionStatus): ActionStatus => {
   return status;
 };
 
-const ActionPlan: React.FC = () => {
+  const ActionPlan: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'kanban' | 'list'>('kanban');
   const [showNewAction, setShowNewAction] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -329,6 +329,16 @@ const ActionPlan: React.FC = () => {
             <button onClick={() => setActiveTab('list')} className={`px-5 py-2 text-xs font-semibold rounded-lg transition-all ${activeTab === 'list' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-600'}`}>Lista</button>
           </div>
         </div>
+        <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold bg-slate-50">
+          <option value="all">Empresa: todas</option>
+          {COMPANY_OPTIONS.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
+        </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ActionStatus)} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold bg-slate-50">
+          <option value="all">Status: todos</option>
+          <option value={ActionStatus.PENDING}>{ActionStatus.PENDING}</option>
+          <option value={ActionStatus.IN_PROGRESS}>{ActionStatus.IN_PROGRESS}</option>
+          <option value={ActionStatus.COMPLETED}>{ActionStatus.COMPLETED}</option>
+        </select>
       </div>
 
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_220px_220px] gap-3">
