@@ -52,6 +52,8 @@ const ActionPlan: React.FC = () => {
   const [showNewAction, setShowNewAction] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<ActionStatus | null>(null);
+  const [dragOverCardId, setDragOverCardId] = useState<string | null>(null);
   const { actions, addAction, addEvidence, completeAction } = useAppData();
 
   const [actionMetaMap, setActionMetaMap] = useState<Record<string, ActionMeta>>(() => {
@@ -197,10 +199,13 @@ const ActionPlan: React.FC = () => {
   };
 
   const moveAction = (actionId: string, targetStatus: ActionStatus, targetIndex?: number) => {
+    const draggedAction = actions.find((action) => action.id === actionId);
+    if (!draggedAction) return;
+
     const targetList = getColumnActions(targetStatus).filter((action) => action.id !== actionId);
     const insertIndex = typeof targetIndex === 'number' ? targetIndex : targetList.length;
 
-    targetList.splice(insertIndex, 0, actions.find((action) => action.id === actionId)!);
+    targetList.splice(insertIndex, 0, draggedAction);
 
     setBoardMap((prev) => {
       const next = { ...prev };
@@ -209,6 +214,18 @@ const ActionPlan: React.FC = () => {
       });
       return next;
     });
+  };
+
+  const handleDragStart = (actionId: string, event: React.DragEvent<HTMLElement>) => {
+    setDraggedId(actionId);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', actionId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverColumn(null);
+    setDragOverCardId(null);
   };
 
   const handleCreateAction = () => {
@@ -300,7 +317,7 @@ const ActionPlan: React.FC = () => {
       </div>
 
       {activeTab === 'kanban' ? (
-        <div className="flex gap-5 overflow-x-auto pb-8 custom-scrollbar min-h-[680px]">
+        <div className="flex gap-5 overflow-x-auto pb-8 custom-scrollbar min-h-[680px] items-start">
           {columns.map((col) => {
             const columnActions = getColumnActions(col.status);
             return (
@@ -311,11 +328,14 @@ const ActionPlan: React.FC = () => {
                 </div>
 
                 <div
-                  className="flex-1 space-y-4 bg-slate-50/50 p-3 rounded-2xl border border-slate-200"
+                  className={`flex-1 space-y-4 p-3 rounded-2xl border transition-all ${dragOverColumn === col.status ? 'bg-indigo-50 border-indigo-300 shadow-inner' : 'bg-slate-50/50 border-slate-200'}`}
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => {
+                  onDragEnter={() => setDragOverColumn(col.status)}
+                  onDragLeave={() => setDragOverColumn((prev) => (prev === col.status ? null : prev))}
+                  onDrop={(e) => {
+                    e.preventDefault();
                     if (draggedId) moveAction(draggedId, col.status);
-                    setDraggedId(null);
+                    handleDragEnd();
                   }}
                 >
                   {columnActions.map((action, index) => {
@@ -327,16 +347,17 @@ const ActionPlan: React.FC = () => {
                     return (
                       <div
                         key={action.id}
-                        draggable
-                        onDragStart={() => setDraggedId(action.id)}
-                        onDragEnd={() => setDraggedId(null)}
                         onDragOver={(e) => e.preventDefault()}
+                        onDragEnter={() => {
+                          if (draggedId && draggedId !== action.id) setDragOverCardId(action.id);
+                        }}
+                        onDragLeave={() => setDragOverCardId((prev) => (prev === action.id ? null : prev))}
                         onDrop={(e) => {
                           e.preventDefault();
-                          if (draggedId) moveAction(draggedId, col.status, index);
-                          setDraggedId(null);
+                          if (draggedId && draggedId !== action.id) moveAction(draggedId, col.status, index);
+                          handleDragEnd();
                         }}
-                        className={`bg-white p-5 rounded-xl border shadow-sm transition-all border-l-4 cursor-grab active:cursor-grabbing ${overdue ? 'border-l-rose-500 border-rose-200' : 'border-l-indigo-500 border-slate-200'}`}
+                        className={`bg-white p-5 rounded-xl border shadow-sm transition-all border-l-4 ${dragOverCardId === action.id ? 'ring-2 ring-indigo-300 scale-[1.01]' : ''} ${draggedId === action.id ? 'opacity-60' : ''} ${overdue ? 'border-l-rose-500 border-rose-200' : 'border-l-indigo-500 border-slate-200'}`}
                       >
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex flex-wrap gap-1.5">
@@ -344,7 +365,15 @@ const ActionPlan: React.FC = () => {
                             <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border border-slate-200 bg-slate-50 text-slate-600">{action.actionType}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <GripVertical size={14} className="text-slate-300" />
+                            <button
+                              draggable
+                              onDragStart={(e) => handleDragStart(action.id, e)}
+                              onDragEnd={handleDragEnd}
+                              title="Arraste para mover"
+                              className="text-slate-300 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50 cursor-grab active:cursor-grabbing"
+                            >
+                              <GripVertical size={14} />
+                            </button>
                             <button onClick={() => setActiveMenu(activeMenu === action.id ? null : action.id)} className="text-slate-300 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-50"><MoreVertical size={18} /></button>
                           </div>
                         </div>
@@ -392,6 +421,7 @@ const ActionPlan: React.FC = () => {
                     );
                   })}
 
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Arraste pelo ícone lateral para reorganizar como Trello/Jira.</p>
                   <button onClick={() => setShowNewAction(true)} className="w-full py-4 border-2 border-dashed border-slate-300 rounded-3xl text-[11px] font-black text-slate-400 uppercase tracking-widest hover:border-indigo-400 hover:text-indigo-500 hover:bg-white transition-all">
                     + Adicionar Ação
                   </button>
@@ -454,18 +484,18 @@ const ActionPlan: React.FC = () => {
       )}
 
       {showNewAction && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
-            <div className="p-6 bg-indigo-600 text-white flex items-center justify-between">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300 max-h-[92vh] flex flex-col">
+            <div className="px-4 py-4 sm:px-6 sm:py-5 bg-indigo-600 text-white flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-xl font-black uppercase tracking-tight">Nova Ação Corretiva</h3>
+                <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight">Nova Ação Corretiva</h3>
                 <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest opacity-80">Kanban por empresa e área</p>
               </div>
-              <button onClick={() => setShowNewAction(false)} className="p-2 rounded-xl bg-white/10"><X size={22} /></button>
+              <button onClick={() => setShowNewAction(false)} className="p-2 rounded-xl bg-white/10"><X size={20} /></button>
             </div>
 
-            <div className="p-8 space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 sm:p-6 space-y-4 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold" placeholder="Título da ação" />
                 <input value={newResponsible} onChange={(e) => setNewResponsible(e.target.value)} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold" placeholder="Responsável" />
 
@@ -485,15 +515,15 @@ const ActionPlan: React.FC = () => {
                 </select>
                 <input type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold" />
                 <input value={newImpact} onChange={(e) => setNewImpact(e.target.value)} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold md:col-span-2" placeholder="Impacto esperado" />
-                <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold md:col-span-2 h-24 resize-none" placeholder="Descrição do plano de trabalho" />
+                <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold md:col-span-2 h-24 sm:h-28 resize-none" placeholder="Descrição do plano de trabalho" />
               </div>
 
-              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3">
+              <div className="p-3 sm:p-4 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3">
                 <Info size={18} className="text-amber-600 shrink-0" />
                 <p className="text-[11px] text-amber-900 font-bold leading-relaxed uppercase">Concluir ação exige ao menos 1 evidência documental vinculada.</p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 pb-1">
                 <button onClick={() => setShowNewAction(false)} className="flex-1 px-4 py-3 rounded-2xl bg-slate-100 text-slate-700 text-xs font-black uppercase">Cancelar</button>
                 <button onClick={handleCreateAction} className="flex-1 px-4 py-3 rounded-2xl bg-indigo-600 text-white text-xs font-black uppercase">Criar Plano de Ação</button>
               </div>

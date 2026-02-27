@@ -1,20 +1,21 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useState } from 'react';
 import { MOCK_USERS, MOCK_TENANTS } from './constants';
 import { AppModuleId, ClientCompany, ModulePermissions, PermissionProfile, User, Tenant, UserPreferences, UserProfileSettings, UserStatus } from './types';
 import Layout from './components/Layout';
-import Dashboard from './components/Dashboard';
-import Inventory from './components/Inventory';
-import ActionPlan from './components/ActionPlan';
-import PsychosocialModule from './components/PsychosocialModule';
-import Reports from './components/Reports';
-import UsersModule from './components/UsersModule';
-import UnitsModule from './components/UnitsModule';
-import AuditReadiness from './components/AuditReadiness';
-import ComplianceTimeline from './components/ComplianceTimeline';
-import FormsCenter from './components/FormsCenter';
-import OperationsHub from './components/OperationsHub';
-import PermissionsModule from './components/PermissionsModule';
 import { AppDataProvider } from './appData';
+
+const Dashboard = lazy(() => import('./components/Dashboard'));
+const Inventory = lazy(() => import('./components/Inventory'));
+const ActionPlan = lazy(() => import('./components/ActionPlan'));
+const PsychosocialModule = lazy(() => import('./components/PsychosocialModule'));
+const Reports = lazy(() => import('./components/Reports'));
+const UsersModule = lazy(() => import('./components/UsersModule'));
+const UnitsModule = lazy(() => import('./components/UnitsModule'));
+const AuditReadiness = lazy(() => import('./components/AuditReadiness'));
+const ComplianceTimeline = lazy(() => import('./components/ComplianceTimeline'));
+const FormsCenter = lazy(() => import('./components/FormsCenter'));
+const OperationsHub = lazy(() => import('./components/OperationsHub'));
+const PermissionsModule = lazy(() => import('./components/PermissionsModule'));
 
 const SETTINGS_STORAGE_KEY = 'settings-profile-v2';
 
@@ -180,60 +181,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  const [preferences, setPreferences] = useState<UserPreferences>(() => {
-    if (typeof window === 'undefined') return defaultPreferences;
-    try {
-      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (!raw) return defaultPreferences;
-      const parsed = JSON.parse(raw);
-      return { ...defaultPreferences, ...parsed.preferences };
-    } catch { return defaultPreferences; }
-  });
-
-  const [profile, setProfile] = useState<UserProfileSettings>(() => {
-    if (typeof window === 'undefined') return defaultProfile;
-    try {
-      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (!raw) return defaultProfile;
-      const parsed = JSON.parse(raw);
-      return { ...defaultProfile, ...parsed.profile };
-    } catch { return defaultProfile; }
-  });
-
-  const [permissionProfiles, setPermissionProfiles] = useState<PermissionProfile[]>(() => {
-    if (typeof window === 'undefined') return defaultPermissionProfiles();
-    try {
-      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (!raw) return defaultPermissionProfiles();
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed.permissionProfiles) && parsed.permissionProfiles.length
-        ? parsed.permissionProfiles
-        : defaultPermissionProfiles();
-    } catch { return defaultPermissionProfiles(); }
-  });
-
-  const [selectedPermissionProfileId, setSelectedPermissionProfileId] = useState<string>(() => {
-    if (typeof window === 'undefined') return 'pf-admin';
-    try {
-      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (!raw) return 'pf-admin';
-      const parsed = JSON.parse(raw);
-      return parsed.selectedPermissionProfileId || 'pf-admin';
-    } catch { return 'pf-admin'; }
-  });
-
-  const activePermissionProfile = permissionProfiles.find(p => p.id === selectedPermissionProfileId) || permissionProfiles[0];
-  const activePermissions = activePermissionProfile?.permissions || defaultPermissions();
-
-  React.useEffect(() => {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
-      preferences,
-      profile,
-      permissionProfiles,
-      selectedPermissionProfileId,
-    }));
-  }, [preferences, profile, permissionProfiles, selectedPermissionProfileId]);
-
   const logout = () => {
     setCurrentUser(null);
     setCurrentTenant(null);
@@ -345,7 +292,9 @@ const App: React.FC = () => {
         setProfile={setProfile}
         permissions={activePermissions}
       >
-        {renderContent()}
+        <Suspense fallback={<div className="p-10 text-center text-slate-400">Carregando módulo...</div>}>
+          {renderContent()}
+        </Suspense>
       </Layout>
     </AppDataProvider>
   );
