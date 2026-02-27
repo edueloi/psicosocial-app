@@ -4,7 +4,7 @@ import {
   Building2, Plus, ChevronRight, Users, Shield, Factory, 
   MapPin, MoreVertical, Search, Filter, User, Calendar, 
   ShieldAlert, AlertTriangle, CheckCircle2, Archive, 
-  Settings2, LayoutGrid, Info, Eye, ExternalLink, History,
+  Settings2, LayoutGrid, Info, X, Eye, ExternalLink, History,
   ShieldCheck, BrainCircuit, Activity, ClipboardList
 } from 'lucide-react';
 import { Unit, Sector } from '../types';

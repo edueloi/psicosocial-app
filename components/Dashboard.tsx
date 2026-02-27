@@ -1,320 +1,430 @@
-﻿
-import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
-import { Activity, AlertTriangle, CheckCircle2, Clock, Award, ShieldCheck, TrendingDown, DollarSign, Scale, Filter, Calendar, FileCheck, History, Info, ChevronDown, Zap, TrendingUp } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  ReferenceLine,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+} from 'recharts';
+import {
+  Activity,
+  CalendarClock,
+  CircleCheck,
+  ClipboardList,
+  Eye,
+  HeartPulse,
+  ShieldAlert,
+  Stethoscope,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
 import { useAppData } from '../appData';
 import { ActionStatus } from '../types';
-import Button from './Button';
 
 interface DashboardProps {
   vision?: 'tech' | 'exec';
 }
 
-const riskData = [
-  { name: 'Físico', value: 12 },
-  { name: 'Ergonômico', value: 19 },
-  { name: 'Químico', value: 5 },
-  { name: 'Psicossocial', value: 24 },
-  { name: 'Biológico', value: 3 },
+const evolutionData = [
+  { year: '2020', baseline: 82, atual: 70 },
+  { year: '2021', baseline: 82, atual: 63 },
+  { year: '2022', baseline: 82, atual: 55 },
+  { year: '2023', baseline: 82, atual: 47 },
+  { year: '2024', baseline: 82, atual: 38 },
+  { year: '2025', baseline: 82, atual: 31 },
 ];
 
-const actionData = [
-  { name: 'Jan', concluido: 40, pendente: 24 },
-  { name: 'Fev', concluido: 30, pendente: 13 },
-  { name: 'Mar', concluido: 50, pendente: 98 },
-  { name: 'Abr', concluido: 67, pendente: 39 },
-  { name: 'Mai', concluido: 88, pendente: 28 },
-  { name: 'Jun', concluido: 93, pendente: 18 },
+const participationData = [
+  { month: 'Jan', adesao: 72 },
+  { month: 'Fev', adesao: 78 },
+  { month: 'Mar', adesao: 81 },
+  { month: 'Abr', adesao: 83 },
+  { month: 'Mai', adesao: 79 },
+  { month: 'Jun', adesao: 86 },
+  { month: 'Jul', adesao: 88 },
+  { month: 'Ago', adesao: 84 },
 ];
 
-const legalRiskHistory = [
-  { name: 'Jan', score: 85 },
-  { name: 'Fev', score: 72 },
-  { name: 'Mar', score: 68 },
-  { name: 'Abr', score: 45 },
-  { name: 'Mai', score: 32 },
-  { name: 'Jun', score: 18 },
+const ambulatoryData = [
+  { sector: 'Toyota 452', ombro: 18, coluna: 24, joelho: 12 },
+  { sector: 'Usina Pilon', ombro: 14, coluna: 21, joelho: 9 },
+  { sector: 'Logística', ombro: 10, coluna: 16, joelho: 7 },
+  { sector: 'Administrativo', ombro: 6, coluna: 8, joelho: 4 },
 ];
 
-const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+const preventionData = [
+  { month: 'Jan', momentaneas: 37, reabilitados: 26 },
+  { month: 'Fev', momentaneas: 40, reabilitados: 29 },
+  { month: 'Mar', momentaneas: 34, reabilitados: 28 },
+  { month: 'Abr', momentaneas: 31, reabilitados: 25 },
+  { month: 'Mai', momentaneas: 29, reabilitados: 24 },
+  { month: 'Jun', momentaneas: 27, reabilitados: 23 },
+];
+
+const cidAbsenceData = [
+  { cid: 'F', ate15: 41, acima15: 13 },
+  { cid: 'G', ate15: 33, acima15: 9 },
+  { cid: 'I', ate15: 26, acima15: 8 },
+];
+
+const riskMatrixData = [
+  { sector: 'Fundição', risco: 92 },
+  { sector: 'Prensas', risco: 84 },
+  { sector: 'Montagem', risco: 66 },
+  { sector: 'Expedição', risco: 58 },
+  { sector: 'Adm', risco: 31 },
+];
+
+const admissionData = [
+  { name: 'Recomendados', value: 847 },
+  { name: 'Não recomendados', value: 153 },
+];
+
+const campaignData = [
+  { item: 'Setembro Amarelo', progresso: 100 },
+  { item: 'Outubro Rosa', progresso: 100 },
+  { item: 'Novembro Azul', progresso: 92 },
+  { item: 'Demais campanhas', progresso: 84 },
+];
+
+const flexibilityData = [
+  { year: '2021', indice: 61 },
+  { year: '2022', indice: 67 },
+  { year: '2023', indice: 72 },
+  { year: '2024', indice: 78 },
+  { year: '2025', indice: 83 },
+];
+
+const lostDaysData = [
+  { month: 'Jan', diasPerdidos: 96, cidF: 35, cidG: 38, cidI: 23 },
+  { month: 'Fev', diasPerdidos: 87, cidF: 32, cidG: 34, cidI: 21 },
+  { month: 'Mar', diasPerdidos: 79, cidF: 27, cidG: 31, cidI: 21 },
+  { month: 'Abr', diasPerdidos: 73, cidF: 25, cidG: 29, cidI: 19 },
+  { month: 'Mai', diasPerdidos: 68, cidF: 23, cidG: 27, cidI: 18 },
+  { month: 'Jun', diasPerdidos: 64, cidF: 21, cidG: 25, cidI: 18 },
+];
+
+const PIE_COLORS = ['#16a34a', '#ef4444'];
 
 const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
   const [includePsychosocial, setIncludePsychosocial] = useState(true);
   const { actions } = useAppData();
-  const overdueCount = actions.filter(a => new Date(a.dueDate) < new Date() && a.status !== ActionStatus.COMPLETED).length;
-  const pendingEvidence = actions.filter(a => a.evidenceCount === 0 && a.status !== ActionStatus.COMPLETED).length;
-  const criticalOpen = actions.filter(a => a.riskLevel === 'CrÃ­tico' && a.status !== ActionStatus.COMPLETED).length;
+
+  const metrics = useMemo(() => {
+    const totalActions = actions.length || 1;
+    const completed = actions.filter((action) => action.status === ActionStatus.COMPLETED).length;
+    const evidenceCoverage = Math.round((actions.filter((action) => action.evidenceCount > 0).length / totalActions) * 100);
+    const overdue = actions.filter((action) => new Date(action.dueDate) < new Date() && action.status !== ActionStatus.COMPLETED).length;
+
+    return {
+      completionRate: Math.round((completed / totalActions) * 100),
+      evidenceCoverage,
+      overdue,
+      totalActions: actions.length,
+    };
+  }, [actions]);
+
+  const avgParticipation = Math.round(participationData.reduce((sum, item) => sum + item.adesao, 0) / participationData.length);
+  const rehabRate = Math.round(
+    (preventionData.reduce((sum, item) => sum + item.reabilitados, 0) /
+      preventionData.reduce((sum, item) => sum + item.momentaneas, 0)) *
+      100,
+  );
+
+  const totalLostDays = lostDaysData.reduce((sum, item) => sum + item.diasPerdidos, 0);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
-      {/* Dashboard Top Navigation & Filters */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">
-            {vision === 'exec' ? 'Dashboard de Impacto e Governança' : 'Visão Geral Técnica NR-01'}
+            {vision === 'exec' ? 'Resultados Integrados da Operação Atividade' : 'Dashboard Integrado: Ginástica, Ergonomia, Fisioterapia e NR1'}
           </h2>
-          <p className="text-slate-500 text-sm mt-1">
-            {vision === 'exec' 
-              ? 'Análise de ROI, risco jurídico e saúde organizacional' 
-              : 'Acompanhamento de inventário, controles e prazos'}
+          <p className="text-slate-600 text-sm mt-1">
+            Indicadores em tempo real para eliminar retrabalho de planilha, acelerar decisões e fortalecer auditorias com evidências.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm hover:border-slate-300 transition-colors">
-            <Filter size={16} className="text-slate-400" />
-            <select className="text-xs font-semibold text-slate-700 border-none bg-transparent outline-none focus:ring-0 cursor-pointer">
-              <option>Todas as Unidades</option>
-              <option>Planta Norte</option>
-              <option>Escritório Central</option>
-            </select>
-          </div>
-          <div className="bg-white border border-slate-200 rounded-xl px-3 py-2 flex items-center gap-2 shadow-sm hover:border-slate-300 transition-colors">
-            <Calendar size={16} className="text-slate-400" />
-            <select className="text-xs font-semibold text-slate-700 border-none bg-transparent outline-none focus:ring-0 cursor-pointer">
-              <option>Últimos 6 meses</option>
-              <option>Último ano</option>
-              <option>Sempre</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
-            <button 
-              onClick={() => setIncludePsychosocial(true)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                includePsychosocial 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              C/ Psicossocial
-            </button>
-            <button 
-              onClick={() => setIncludePsychosocial(false)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                !includePsychosocial 
-                  ? 'bg-white text-indigo-600 shadow-sm' 
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              S/ Psicossocial
-            </button>
-          </div>
+        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit">
+          <button
+            onClick={() => setIncludePsychosocial(true)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              includePsychosocial ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            C/ Psicossocial
+          </button>
+          <button
+            onClick={() => setIncludePsychosocial(false)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+              !includePsychosocial ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            S/ Psicossocial
+          </button>
         </div>
       </div>
 
-      {/* Hero Stats Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Maturity Score */}
-        <div className="lg:col-span-4 bg-gradient-to-br from-indigo-600 via-indigo-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200/50 flex flex-col justify-between relative overflow-hidden">
-          <div className="relative z-10">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-bold uppercase tracking-wider opacity-90">Maturidade NR-01</p>
-              <div className="group relative">
-                <Info size={16} className="opacity-70 cursor-help hover:opacity-100 transition-opacity" />
-                <div className="absolute right-0 bottom-full mb-2 w-56 bg-slate-900 text-white text-xs p-3 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl">
-                  Baseado em Inventário, Plano de Ação, Gestão Psicossocial e Evidências Documentais
-                </div>
-              </div>
-            </div>
-            <div className="flex items-baseline gap-2 mb-3">
-              <span className="text-4xl font-black">85</span>
-              <span className="text-2xl opacity-60">/100</span>
-            </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-lg backdrop-blur-sm">
-              <TrendingUp size={14} />
-              <p className="text-xs font-semibold">Nível: Maduro • +12% vs mês anterior</p>
-            </div>
-          </div>
-          <div className="mt-6 flex gap-1 relative z-10">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex-1 h-2 rounded-full bg-white/20 overflow-hidden">
-                <div className={`h-full bg-white rounded-full transition-all ${i < 3 ? 'w-full' : 'w-1/2'}`}></div>
-              </div>
-            ))}
-          </div>
-          <Award size={160} className="absolute -bottom-8 -right-8 text-white opacity-[0.07] pointer-events-none" />
-        </div>
-
-        {/* Readiness Detailed */}
-        <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-indigo-300 hover:shadow-md transition-all">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Pronto para Auditoria</p>
-                <p className="text-3xl font-black text-slate-900">95%</p>
-              </div>
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
-                <ShieldCheck size={22} strokeWidth={2.5} />
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 font-medium mb-2">Faltam <span className="text-indigo-600 font-bold">3 itens</span> para conformidade total</p>
-              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full w-[95%] transition-all"></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-emerald-300 hover:shadow-md transition-all">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Última Revisão PGR</p>
-                <p className="text-3xl font-black text-slate-900">12/10/2023</p>
-              </div>
-              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
-                <FileCheck size={22} strokeWidth={2.5} />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <p className="text-sm font-semibold text-emerald-600">PGR Válido e Ativo</p>
-              <span className="text-xs text-slate-400 ml-auto font-medium">Próx: 10/2024</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Critical Items Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {[
-          { label: 'Riscos Críticos Abertos', value: '03', sub: 'Severidade Alta sem ação', icon: <AlertTriangle />, color: 'text-rose-600', bg: 'bg-rose-50', border: 'border-rose-200' },
-          { label: 'Ações Vencidas', value: '02', sub: 'Prazos expirados hoje', icon: <Clock />, color: 'text-rose-500', bg: 'bg-rose-50', border: 'border-rose-200' },
-          { label: 'Evidências Pendentes', value: '15', sub: 'Aguardando comprovação', icon: <History />, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
-          { label: 'Último Evento NR-01', value: '09/04', sub: 'Reavaliação por Mudança', icon: <Activity />, color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200' },
-        ].map((stat, i) => (
-          <div key={i} className={`bg-white p-5 rounded-2xl border ${i < 2 && stat.value !== '00' ? stat.border : 'border-slate-200'} shadow-sm hover:shadow-md transition-all group cursor-pointer`}>
-            <div className="flex items-center justify-between mb-3">
-              <div className={`w-11 h-11 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                {React.cloneElement(stat.icon, { size: 20, strokeWidth: 2.5 })}
-              </div>
-              <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+          {
+            label: 'Adesão média na ginástica',
+            value: `${avgParticipation}%`,
+            note: 'Meta contratual: > 80%',
+            icon: <Users size={18} />,
+            tone: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+          },
+          {
+            label: 'Reabilitados sem afastamento',
+            value: `${rehabRate}%`,
+            note: 'Queixas momentâneas tratadas preventivamente',
+            icon: <HeartPulse size={18} />,
+            tone: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+          },
+          {
+            label: 'Planos com evidência (foto/doc)',
+            value: `${metrics.evidenceCoverage}%`,
+            note: `${metrics.totalActions} ações ativas no plano`,
+            icon: <CircleCheck size={18} />,
+            tone: 'text-sky-700 bg-sky-50 border-sky-200',
+          },
+          {
+            label: 'Pendências fora do prazo',
+            value: `${metrics.overdue}`,
+            note: `Execução geral: ${metrics.completionRate}% concluída`,
+            icon: <CalendarClock size={18} />,
+            tone: 'text-rose-700 bg-rose-50 border-rose-200',
+          },
+        ].map((card) => (
+          <article key={card.label} className={`rounded-2xl border p-4 ${card.tone}`}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs uppercase font-semibold tracking-[0.12em] opacity-80">KPI</p>
+              {card.icon}
             </div>
-            <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">{stat.label}</p>
-              <p className="text-xs text-slate-600 font-medium" title={stat.sub}>{stat.sub}</p>
-            </div>
-          </div>
+            <p className="text-3xl font-black mb-1">{card.value}</p>
+            <p className="text-sm font-semibold">{card.label}</p>
+            <p className="text-xs mt-1 opacity-80">{card.note}</p>
+          </article>
         ))}
       </div>
 
-      {/* Main Charts Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Evolutionary Charts */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-1">
-                {vision === 'exec' ? 'ROI: Prevenção vs Exposição Financeira' : 'Evolução de Execução do Plano'}
-              </h3>
-              <p className="text-sm text-slate-500">Desempenho consolidado das contramedidas de risco</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
-                <span className="text-xs font-semibold text-slate-600">Concluídas</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-slate-300"></div>
-                <span className="text-xs font-semibold text-slate-600">Abertas</span>
-              </div>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <section className="xl:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-900">1) Evolução de Queixas Musculares (Linha de Base)</h3>
+          <p className="text-xs text-slate-500 mb-4">Comparativo histórico entre início de contrato (linha vermelha) e cenário atual (linha azul).</p>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={actionData}>
-                <defs>
-                  <linearGradient id="colorConc" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  cursor={{ stroke: '#e2e8f0', strokeWidth: 2 }}
-                />
-                <Area type="monotone" dataKey="concluido" stroke="#6366f1" strokeWidth={3} fillOpacity={1} fill="url(#colorConc)" dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#fff' }} />
-                <Area type="monotone" dataKey="pendente" stroke="#cbd5e1" strokeWidth={2} strokeDasharray="5 5" fillOpacity={0} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Legal Risk / Mitigation Chart */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
-          <div className="mb-5">
-            <h3 className="text-lg font-bold text-slate-900 mb-1">Risco Legal Progressivo</h3>
-            <p className="text-sm text-slate-500">Mitigação de exposição nos últimos 6 meses</p>
-          </div>
-          <div className="flex-1 min-h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={legalRiskHistory}>
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', fontSize: '12px' }}
-                />
-                <Line type="step" dataKey="score" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} label={{ position: 'top', fontSize: 10, fill: '#ef4444', fontWeight: 'bold' }} />
+              <LineChart data={evolutionData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="year" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="baseline" stroke="#ef4444" strokeWidth={2.5} name="Linha base (início contrato)" />
+                <Line type="monotone" dataKey="atual" stroke="#2563eb" strokeWidth={3} name="Situação atual" />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between text-sm font-semibold mb-2">
-              <span className="text-slate-600">Status Atual</span>
-              <span className="text-emerald-600">Blindagem Jurídica Ativa</span>
-            </div>
-            <p className="text-xs text-slate-500 leading-relaxed">O sistema projeta uma redução de 80% em potenciais multas por NR-01 devido à gestão contínua e evidenciada</p>
+        </section>
+
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-900">2) Adesão por mês</h3>
+          <p className="text-xs text-slate-500 mb-4">Participação na ginástica laboral com meta de 80%.</p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={participationData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
+                <Tooltip formatter={(value) => [`${value}%`, 'Adesão']} />
+                <ReferenceLine y={80} stroke="#f59e0b" strokeDasharray="5 5" label={{ value: 'Meta 80%', position: 'insideTopRight', fontSize: 11 }} />
+                <Bar dataKey="adesao" fill="#4f46e5" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        </div>
+        </section>
       </div>
 
-      {/* Footer Alerts & Triggers */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 bg-rose-50 border border-rose-200 p-6 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="w-12 h-12 bg-rose-600 text-white rounded-xl flex items-center justify-center shrink-0 shadow-md">
-            <Zap size={24} strokeWidth={2.5} />
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-900">3) Queixas ambulatoriais por setor e estrutura corporal</h3>
+          <p className="text-xs text-slate-500 mb-4">Visão para priorizar intervenção ergonômica e fisioterapêutica.</p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={ambulatoryData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="sector" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="ombro" stackId="a" fill="#f97316" name="Ombro" />
+                <Bar dataKey="coluna" stackId="a" fill="#0ea5e9" name="Coluna" />
+                <Bar dataKey="joelho" stackId="a" fill="#22c55e" name="Joelho" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-          <div className="flex-1">
-            <h4 className="text-rose-900 font-bold mb-1.5 text-base">Gatilho de Reavaliação Pendente</h4>
-            <p className="text-sm text-rose-700 leading-relaxed">Identificamos uma <span className="font-bold">mudança organizacional</span> (novas máquinas na Planta Norte) que exige reavaliação imediata de riscos para manter a conformidade legal</p>
-          </div>
-          <Button 
-            variant="danger" 
-            size="md"
-            className="shrink-0 whitespace-nowrap"
-          >
-            Tratar Agora
-          </Button>
-        </div>
+        </section>
 
-        <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col justify-center">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-              <ShieldCheck size={20} className="text-indigo-600" strokeWidth={2.5} />
-            </div>
-            <h4 className="font-bold text-slate-900 text-base">Resumo de Auditoria</h4>
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-900">4) Queixas momentâneas x reabilitados</h3>
+          <p className="text-xs text-slate-500 mb-4">Indicador preventivo para evitar afastamentos acima de 15 dias.</p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={preventionData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="momentaneas" stroke="#ef4444" strokeWidth={2.5} name="Queixas momentâneas" />
+                <Line type="monotone" dataKey="reabilitados" stroke="#16a34a" strokeWidth={2.5} name="Reabilitados" />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-600 font-medium">Documentos</span>
-              <span className="text-emerald-600 font-bold">100% OK</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-600 font-medium">Evidências</span>
-              <span className="text-amber-500 font-bold">85% OK</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-600 font-medium">RT Assinatura</span>
-              <span className="text-emerald-600 font-bold">Ativa</span>
-            </div>
+        </section>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-900">5) Absenteísmo por CID (F, G, I)</h3>
+          <p className="text-xs text-slate-500 mb-4">Separação por afastamentos até 15 dias e acima de 15 dias.</p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={cidAbsenceData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="cid" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="ate15" fill="#0ea5e9" name="Até 15 dias" />
+                <Bar dataKey="acima15" fill="#8b5cf6" name="> 15 dias" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
-        </div>
+        </section>
+
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-900">6) Matriz de Risco Biomecânico</h3>
+          <p className="text-xs text-slate-500 mb-4">Classificação de risco por setor na fase de implantação.</p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={riskMatrixData}>
+                <PolarGrid />
+                <PolarAngleAxis dataKey="sector" tick={{ fontSize: 11 }} />
+                <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
+                <Radar name="Risco biomecânico" dataKey="risco" stroke="#f43f5e" fill="#fb7185" fillOpacity={0.35} />
+                <Tooltip formatter={(value) => [`${value} pts`, 'Risco']} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-900">7) Recomendados x Não recomendados</h3>
+          <p className="text-xs text-slate-500 mb-4">Resultado da avaliação admissional cinesiofuncional.</p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={admissionData} dataKey="value" nameKey="name" innerRadius={65} outerRadius={100} paddingAngle={3}>
+                  {admissionData.map((_, idx) => (
+                    <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      </div>
+
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-900">8) Teste de flexibilidade (anual)</h3>
+          <p className="text-xs text-slate-500 mb-4">Quanto maior o índice de flexibilidade, menor a chance de lesão osteomuscular.</p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={flexibilityData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="year" tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                <Tooltip formatter={(value) => [`${value}%`, 'Índice']} />
+                <ReferenceLine y={75} stroke="#22c55e" strokeDasharray="5 5" label={{ value: 'Meta 75%', position: 'insideTopRight', fontSize: 11 }} />
+                <Line type="monotone" dataKey="indice" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Flexibilidade" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-900">9) Dias perdidos por absenteísmo (CID F/G/I)</h3>
+          <p className="text-xs text-slate-500 mb-4">Impacto mensal consolidado para visão gerencial e negociação com cliente.</p>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={lostDaysData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="cidF" stackId="lost" fill="#a855f7" name="CID F" />
+                <Bar dataKey="cidG" stackId="lost" fill="#3b82f6" name="CID G" />
+                <Bar dataKey="cidI" stackId="lost" fill="#14b8a6" name="CID I" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-xs text-slate-600 mt-2">Total no semestre: <span className="font-bold text-slate-900">{totalLostDays} dias perdidos</span>.</p>
+        </section>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <article className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm lg:col-span-2">
+          <h3 className="font-bold text-slate-900 mb-2">10) Campanhas anuais e governança de conteúdo</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Painel para as 12 campanhas fixas do ano (Setembro Amarelo, Outubro Rosa, Novembro Azul etc.) com status de publicação.
+          </p>
+          <div className="h-52">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={campaignData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
+                <YAxis type="category" dataKey="item" width={120} tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(value) => [`${value}%`, 'Progresso']} />
+                <Bar dataKey="progresso" fill="#14b8a6" radius={[0, 8, 8, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </article>
+
+        <article className="bg-slate-900 text-white rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold mb-3">Fluxo operacional mensal</h3>
+          <ul className="space-y-3 text-sm">
+            <li className="flex gap-2"><ClipboardList size={16} className="mt-0.5 text-indigo-300" /> Entrada até dia 10: profissionais lançam dados direto no sistema.</li>
+            <li className="flex gap-2"><Activity size={16} className="mt-0.5 text-indigo-300" /> Processamento automático de gráficos e comparativos por setor.</li>
+            <li className="flex gap-2"><Eye size={16} className="mt-0.5 text-indigo-300" /> Portal cliente com acesso somente leitura para engenharia/RH.</li>
+            <li className="flex gap-2"><ShieldAlert size={16} className="mt-0.5 text-indigo-300" /> Evidência visual obrigatória para auditoria (fotos antes/depois).</li>
+            <li className="flex gap-2"><Stethoscope size={16} className="mt-0.5 text-indigo-300" /> Embrião NR1: perguntas leves de psicossocial para mapeamento inicial.</li>
+            <li className="flex gap-2"><TrendingUp size={16} className="mt-0.5 text-indigo-300" /> Meta crítica: manter adesão &gt;80% e reduzir queixas ano a ano.</li>
+          </ul>
+        </article>
       </div>
     </div>
   );
 };
 
 export default Dashboard;
-
-
-
