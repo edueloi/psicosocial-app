@@ -12,6 +12,9 @@ import {
   ChevronDownSquare,
   Dot,
   Save,
+  Download,
+  Upload,
+  RotateCcw,
 } from 'lucide-react';
 
 type FieldType = 'text' | 'textarea' | 'dropdown' | 'radio' | 'date' | 'boolean';
@@ -25,6 +28,23 @@ interface FormField {
   options?: string[];
   helpText?: string;
 }
+
+interface PersistedFormState {
+  formName: string;
+  description: string;
+  successMessage: string;
+  fields: FormField[];
+}
+
+const STORAGE_KEY = 'forms-center-state-v1';
+
+const defaultFields: FormField[] = [
+  { id: 'f1', type: 'text', label: 'Nome completo', placeholder: 'Digite seu nome', required: true, helpText: 'Identificação do colaborador.' },
+  { id: 'f2', type: 'dropdown', label: 'Setor', required: true, options: ['Produção', 'Administrativo', 'Logística'], helpText: 'Selecione seu setor.' },
+  { id: 'f3', type: 'radio', label: 'Como avalia sua carga de trabalho?', required: true, options: ['Leve', 'Moderada', 'Alta'], helpText: 'Percepção individual.' },
+  { id: 'f4', type: 'date', label: 'Data da avaliação', required: true, helpText: 'Quando você preencheu este formulário?' },
+  { id: 'f5', type: 'boolean', label: 'Autoriza compartilhamento externo dos dados para análise?', required: true, helpText: 'Consentimento obrigatório.' },
+];
 
 const fieldTemplates: Record<FieldType, Omit<FormField, 'id'>> = {
   text: { type: 'text', label: 'Campo de texto', placeholder: 'Digite aqui', required: false, helpText: 'Resposta curta.' },
@@ -44,22 +64,67 @@ const typeLabels: Record<FieldType, string> = {
   boolean: 'Boolean',
 };
 
+const quickTemplates: { name: string; fields: FormField[] }[] = [
+  {
+    name: 'Template Ginástica Laboral',
+    fields: [
+      { id: 't1', type: 'text', label: 'Nome do colaborador', placeholder: 'Digite o nome', required: true },
+      { id: 't2', type: 'dropdown', label: 'Turno', required: true, options: ['Turno A', 'Turno B', 'Turno C'] },
+      { id: 't3', type: 'boolean', label: 'Participou da sessão?', required: true },
+      { id: 't4', type: 'radio', label: 'Nível de dor atual', required: true, options: ['Sem dor', 'Leve', 'Moderada', 'Alta'] },
+    ],
+  },
+  {
+    name: 'Template Embrião NR1',
+    fields: [
+      { id: 't5', type: 'boolean', label: 'Você sentiu ansiedade nesta semana?', required: true },
+      { id: 't6', type: 'boolean', label: 'Está em acompanhamento terapêutico?', required: false },
+      { id: 't7', type: 'radio', label: 'Carga mental percebida', required: true, options: ['Baixa', 'Média', 'Alta'] },
+      { id: 't8', type: 'textarea', label: 'Observações adicionais', required: false, placeholder: 'Opcional' },
+    ],
+  },
+];
+
+const getInitialState = (): PersistedFormState => {
+  if (typeof window === 'undefined') {
+    return {
+      formName: 'Formulário de Avaliação Psicossocial',
+      description: 'Questionário detalhado para coleta de evidências e ações preventivas.',
+      successMessage: 'Obrigado! Suas respostas foram enviadas com sucesso.',
+      fields: defaultFields,
+    };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) throw new Error('no persisted form state');
+    return JSON.parse(raw) as PersistedFormState;
+  } catch {
+    return {
+      formName: 'Formulário de Avaliação Psicossocial',
+      description: 'Questionário detalhado para coleta de evidências e ações preventivas.',
+      successMessage: 'Obrigado! Suas respostas foram enviadas com sucesso.',
+      fields: defaultFields,
+    };
+  }
+};
+
 const FormsCenter: React.FC = () => {
-  const [formName, setFormName] = React.useState('Formulário de Avaliação Psicossocial');
-  const [description, setDescription] = React.useState('Questionário detalhado para coleta de evidências e ações preventivas.');
-  const [successMessage, setSuccessMessage] = React.useState('Obrigado! Suas respostas foram enviadas com sucesso.');
+  const initialState = React.useMemo(() => getInitialState(), []);
+
+  const [formName, setFormName] = React.useState(initialState.formName);
+  const [description, setDescription] = React.useState(initialState.description);
+  const [successMessage, setSuccessMessage] = React.useState(initialState.successMessage);
   const [publicSlug] = React.useState(`form-${Math.random().toString(36).slice(2, 8)}`);
   const [copied, setCopied] = React.useState(false);
-
-  const [fields, setFields] = React.useState<FormField[]>([
-    { id: 'f1', type: 'text', label: 'Nome completo', placeholder: 'Digite seu nome', required: true, helpText: 'Identificação do colaborador.' },
-    { id: 'f2', type: 'dropdown', label: 'Setor', required: true, options: ['Produção', 'Administrativo', 'Logística'], helpText: 'Selecione seu setor.' },
-    { id: 'f3', type: 'radio', label: 'Como avalia sua carga de trabalho?', required: true, options: ['Leve', 'Moderada', 'Alta'], helpText: 'Percepção individual.' },
-    { id: 'f4', type: 'date', label: 'Data da avaliação', required: true, helpText: 'Quando você preencheu este formulário?' },
-    { id: 'f5', type: 'boolean', label: 'Autoriza compartilhamento externo dos dados para análise?', required: true, helpText: 'Consentimento obrigatório.' },
-  ]);
+  const [fields, setFields] = React.useState<FormField[]>(initialState.fields);
 
   const publicLink = `https://forms.nr01master.com/${publicSlug}`;
+
+  React.useEffect(() => {
+    const state: PersistedFormState = { formName, description, successMessage, fields };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [formName, description, successMessage, fields]);
 
   const addField = (type: FieldType) => {
     const template = fieldTemplates[type];
@@ -70,6 +135,12 @@ const FormsCenter: React.FC = () => {
         id: `f${Date.now()}`,
       },
     ]);
+  };
+
+  const applyQuickTemplate = (name: string) => {
+    const template = quickTemplates.find(item => item.name === name);
+    if (!template) return;
+    setFields(template.fields.map((field, idx) => ({ ...field, id: `qt-${Date.now()}-${idx}` })));
   };
 
   const updateField = (id: string, patch: Partial<FormField>) => {
@@ -106,6 +177,44 @@ const FormsCenter: React.FC = () => {
     }
   };
 
+  const exportJson = () => {
+    const payload: PersistedFormState = { formName, description, successMessage, fields };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${formName.toLowerCase().replace(/\s+/g, '-') || 'formulario'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importJson = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result)) as PersistedFormState;
+        setFormName(parsed.formName || 'Formulário importado');
+        setDescription(parsed.description || 'Descrição importada');
+        setSuccessMessage(parsed.successMessage || 'Obrigado!');
+        setFields((parsed.fields || []).map((f, idx) => ({ ...f, id: f.id || `imp-${Date.now()}-${idx}` })));
+      } catch {
+        // silently ignore invalid file in demo
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const resetForm = () => {
+    window.localStorage.removeItem(STORAGE_KEY);
+    const fallback = getInitialState();
+    setFormName(fallback.formName);
+    setDescription(fallback.description);
+    setSuccessMessage(fallback.successMessage);
+    setFields(fallback.fields);
+  };
+
   return (
     <div className="p-6 md:p-8 space-y-6 overflow-y-auto h-full">
       <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-7 shadow-sm">
@@ -137,6 +246,20 @@ const FormsCenter: React.FC = () => {
               <label className="text-sm font-semibold text-slate-700">Descrição</label>
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="mt-1 w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
             </div>
+          </div>
+
+          <div className="rounded-xl border border-slate-200 p-3 bg-slate-50 flex flex-wrap gap-2">
+            {quickTemplates.map(item => (
+              <button key={item.name} onClick={() => applyQuickTemplate(item.name)} className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50">
+                Usar {item.name}
+              </button>
+            ))}
+            <button onClick={exportJson} className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-1"><Download size={12} /> Exportar JSON</button>
+            <label className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-1 cursor-pointer">
+              <Upload size={12} /> Importar JSON
+              <input type="file" accept="application/json" className="hidden" onChange={importJson} />
+            </label>
+            <button onClick={resetForm} className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-1"><RotateCcw size={12} /> Restaurar</button>
           </div>
 
           <div>
