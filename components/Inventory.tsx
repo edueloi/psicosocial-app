@@ -4,7 +4,7 @@ import { RiskType } from '../types';
 import { 
   Plus, Filter, Download, MoreVertical, RotateCcw, Zap, ArrowDown, 
   Calendar, ShieldAlert, AlertTriangle, FileText, Search, ChevronRight, 
-  Eye, CheckCircle2, History, Ban, Settings2, LayoutGrid, Info
+  Eye, CheckCircle2, History, Ban, Settings2, LayoutGrid, Info, X
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useAppData } from '../appData';
