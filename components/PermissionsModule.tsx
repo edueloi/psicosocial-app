@@ -25,12 +25,13 @@ const moduleLabels: Record<AppModuleId, string> = {
   units: 'Unidades',
   forms: 'Forms Externos',
   operations: 'Operação Mensal',
+  documents: 'Documentos',
   permissions: 'Permissões',
   reports: 'Relatórios PGR',
 };
 
 const groupedModules: { title: string; modules: AppModuleId[] }[] = [
-  { title: 'Operação e Risco', modules: ['dashboard', 'inventory', 'actions', 'operations', 'forms'] },
+  { title: 'Operação e Risco', modules: ['dashboard', 'inventory', 'actions', 'operations', 'forms', 'documents'] },
   { title: 'Governança', modules: ['psychosocial', 'audit', 'timeline', 'reports'] },
   { title: 'Administração', modules: ['users', 'units', 'permissions'] },
 ];

@@ -86,6 +86,11 @@ const defaultClientCompanies = (): ClientCompany[] => [
 ];
 
 
+const countViewPermissions = (profile?: PermissionProfile) => {
+  const permissions = profile?.permissions || defaultPermissions();
+  return (Object.values(permissions) as ModulePermissions[]).filter((perm) => perm.view).length;
+};
+
 const roleLabels: Record<User['role'], string> = {
   'SUPER_ADMIN': 'Super Admin',
   'TENANT_ADMIN': 'Admin do Tenant',
@@ -113,6 +118,9 @@ const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>(() => MOCK_USERS);
   const [clientCompanies, setClientCompanies] = useState<ClientCompany[]>(() => defaultClientCompanies());
   const [companyProfileMap, setCompanyProfileMap] = useState<Record<string, string>>({});
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const [preferences, setPreferences] = useState<UserPreferences>(() => {
     if (typeof window === 'undefined') return defaultPreferences;
@@ -248,33 +256,78 @@ const App: React.FC = () => {
     }
   };
 
+
+  const handleEmailLogin = () => {
+    const email = loginEmail.trim().toLowerCase();
+    if (!email || !loginPassword.trim()) {
+      setLoginError('Preencha e-mail e senha para continuar.');
+      return;
+    }
+
+    const user = users.find((item) => item.email.trim().toLowerCase() === email);
+    if (!user) {
+      setLoginError('Usuário não encontrado para este e-mail.');
+      return;
+    }
+
+    if (loginPassword.trim().length < 4) {
+      setLoginError('Senha inválida. Use ao menos 4 caracteres.');
+      return;
+    }
+
+    setLoginError(null);
+    handleLogin(user);
+  };
+
   if (!currentUser) {
     const l = preferences.language;
     const title = l === 'en-US' ? 'Secure login and access profile selection' : l === 'es-ES' ? 'Inicio seguro y selección de perfil de acceso' : 'Login seguro e seleção de perfil de acesso';
 
     return (
       <div className="min-h-screen bg-slate-950 text-white p-4 sm:p-8">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1.1fr_1fr] gap-6 lg:gap-10 items-stretch">
-          <div className="rounded-3xl border border-indigo-500/30 bg-gradient-to-br from-indigo-600/30 via-slate-900 to-slate-900 p-8 sm:p-10 shadow-2xl">
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-200">NR01 Master • Access Hub</p>
-            <h1 className="text-3xl sm:text-4xl font-black mt-3">Plataforma de gestão, acessos e compliance</h1>
-            <p className="text-sm sm:text-base text-slate-300 mt-4 max-w-xl">{title}</p>
-            <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="rounded-2xl bg-white/5 border border-white/10 p-4"><p className="text-xs text-slate-400 uppercase">Módulos</p><p className="text-2xl font-black text-indigo-200">13</p></div>
-              <div className="rounded-2xl bg-white/5 border border-white/10 p-4"><p className="text-xs text-slate-400 uppercase">Perfis</p><p className="text-2xl font-black text-indigo-200">{permissionProfiles.length}</p></div>
-              <div className="rounded-2xl bg-white/5 border border-white/10 p-4"><p className="text-xs text-slate-400 uppercase">Empresas</p><p className="text-2xl font-black text-indigo-200">{clientCompanies.length}</p></div>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-[0.4fr_0.6fr] gap-6">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 sm:p-8 shadow-2xl">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-200">NR01 MASTER • LOGIN</p>
+            <h1 className="text-3xl font-black mt-3">Entrar com e-mail e senha</h1>
+            <p className="text-sm text-slate-300 mt-2">{title}</p>
+
+            <div className="mt-6 space-y-3">
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={(e) => { setLoginEmail(e.target.value); if (loginError) setLoginError(null); }}
+                placeholder="E-mail corporativo"
+                className="w-full rounded-xl border border-white/15 bg-slate-900/70 px-4 py-3 text-sm text-white placeholder:text-slate-500"
+              />
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => { setLoginPassword(e.target.value); if (loginError) setLoginError(null); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleEmailLogin(); }}
+                placeholder="Senha"
+                className="w-full rounded-xl border border-white/15 bg-slate-900/70 px-4 py-3 text-sm text-white placeholder:text-slate-500"
+              />
+              {loginError && <p className="text-xs font-semibold text-rose-300">{loginError}</p>}
+              <button onClick={handleEmailLogin} className="w-full px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black uppercase">Logar</button>
+              <button onClick={() => setLoginError('Recuperação de senha enviada para o e-mail informado (simulação).')} className="text-xs font-semibold text-indigo-200 hover:text-white underline">Esqueci a senha</button>
+            </div>
+
+            <div className="mt-6 grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3"><p className="text-[10px] uppercase text-slate-400">Módulos</p><p className="text-xl font-black text-indigo-200">13</p></div>
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3"><p className="text-[10px] uppercase text-slate-400">Perfis</p><p className="text-xl font-black text-indigo-200">{permissionProfiles.length}</p></div>
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3"><p className="text-[10px] uppercase text-slate-400">Empresas</p><p className="text-xl font-black text-indigo-200">{clientCompanies.length}</p></div>
             </div>
           </div>
 
           <div className="rounded-3xl bg-white border border-slate-200 shadow-2xl p-5 sm:p-6 text-slate-900">
             <div className="mb-4">
-              <h2 className="text-2xl font-black text-indigo-600">Entrar no sistema</h2>
-              <p className="text-sm text-slate-500 mt-1">Escolha um perfil para simular os níveis de acesso.</p>
+              <h2 className="text-2xl font-black text-indigo-600">Acesso rápido (cards)</h2>
+              <p className="text-sm text-slate-500 mt-1">Entre direto em perfis prontos para demonstração.</p>
             </div>
             <div className="space-y-3">
               {users.map((u) => {
                 const profile = permissionProfiles.find((p) => p.id === u.permissionProfileId);
-                const permissionCount = Object.values((profile?.permissions || defaultPermissions())).filter((perm) => perm.view).length;
+                const permissionCount = countViewPermissions(profile);
                 return (
                   <button key={u.id} onClick={() => handleLogin(u)} className="w-full text-left p-4 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/60 transition group">
                     <div className="flex items-start justify-between gap-3">

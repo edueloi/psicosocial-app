@@ -58,7 +58,7 @@ const normalizeStatus = (status: ActionStatus): ActionStatus => {
   return status;
 };
 
-  const ActionPlan: React.FC = () => {
+const ActionPlan: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'kanban' | 'list'>('kanban');
   const [showNewAction, setShowNewAction] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -338,6 +338,23 @@ const normalizeStatus = (status: ActionStatus): ActionStatus => {
           <option value={ActionStatus.PENDING}>{ActionStatus.PENDING}</option>
           <option value={ActionStatus.IN_PROGRESS}>{ActionStatus.IN_PROGRESS}</option>
           <option value={ActionStatus.COMPLETED}>{ActionStatus.COMPLETED}</option>
+        </select>
+      </div>
+
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_220px_220px] gap-3">
+        <div className="relative">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar por ação, risco, empresa ou área" className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm" />
+        </div>
+        <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold bg-slate-50">
+          <option value="all">Empresa: todas</option>
+          {COMPANY_OPTIONS.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
+        </select>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ActionStatus)} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold bg-slate-50">
+          <option value="all">Status: todos</option>
+          <option value={ActionStatus.PENDING}>Pendente</option>
+          <option value={ActionStatus.IN_PROGRESS}>Em andamento</option>
+          <option value={ActionStatus.COMPLETED}>Concluído</option>
         </select>
       </div>
 
