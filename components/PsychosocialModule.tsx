@@ -54,6 +54,27 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
     }
   };
 
+
+  const embryoQuestions = [
+    { id: 'q1', question: 'Você sentiu ansiedade nesta semana?', type: 'boolean', sensitivity: 'Baixa' },
+    { id: 'q2', question: 'Está em acompanhamento terapêutico?', type: 'boolean', sensitivity: 'Média' },
+    { id: 'q3', question: 'Como está sua carga mental de trabalho?', type: 'likert', sensitivity: 'Baixa' },
+    { id: 'q4', question: 'Você percebe suporte da liderança imediata?', type: 'likert', sensitivity: 'Baixa' },
+  ];
+
+  const coffeeRitual = {
+    cadence: 'Quinta-feira às 10h',
+    participants: 'Advogada + Psicóloga + SST + RH',
+    objective: 'Definir o que pode/não pode no questionário NR1 sem gerar passivo trabalhista',
+  };
+
+  const pilotSnapshot = [
+    { label: 'Vidas no piloto (Usina)', value: '1.000', note: 'Base inicial para o embrião NR1' },
+    { label: 'Perguntas seguras aprovadas', value: '12', note: 'Revisadas no café técnico' },
+    { label: 'Triagens com sinal de atenção', value: '118', note: 'Encaminhamento preventivo' },
+    { label: 'Planos de ação abertos', value: '27', note: 'Vinculados ao PGR psicossocial' },
+  ];
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
       {/* Module Header */}
@@ -243,6 +264,55 @@ const PsychosocialModule: React.FC<PsychosocialProps> = ({ vision = 'tech' }) =>
             Gerenciar Todos os Incidentes
           </button>
         </div>
+      </div>
+
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <section className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
+            <div>
+              <h3 className="font-black text-slate-800 text-lg">Embrião NR1: Questionário Seguro e Progressivo</h3>
+              <p className="text-xs text-slate-500">Começar simples para mapear risco psicossocial sem aprofundamento jurídico sensível.</p>
+            </div>
+            <span className="px-3 py-1 text-xs font-bold uppercase rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700">
+              Estratégia: mapeamento leve
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {embryoQuestions.map((item) => (
+              <div key={item.id} className="rounded-xl border border-slate-200 p-3">
+                <p className="text-sm font-semibold text-slate-800">{item.question}</p>
+                <div className="mt-2 flex items-center gap-2 text-xs">
+                  <span className="px-2 py-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-600">Tipo: {item.type}</span>
+                  <span className={`px-2 py-1 rounded-lg border ${item.sensitivity === 'Média' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'}`}>
+                    Sensibilidade: {item.sensitivity}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 p-3 rounded-xl border border-indigo-200 bg-indigo-50">
+            <p className="text-xs font-black uppercase tracking-wider text-indigo-700">Ritual de governança do conteúdo</p>
+            <p className="text-xs text-indigo-900 mt-1"><span className="font-semibold">Cadência:</span> {coffeeRitual.cadence}</p>
+            <p className="text-xs text-indigo-900"><span className="font-semibold">Participantes:</span> {coffeeRitual.participants}</p>
+            <p className="text-xs text-indigo-900"><span className="font-semibold">Objetivo:</span> {coffeeRitual.objective}</p>
+          </div>
+        </section>
+
+        <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <h3 className="font-black text-slate-800 text-base mb-4">Snapshot do Piloto Psicossocial</h3>
+          <div className="space-y-2">
+            {pilotSnapshot.map((item, idx) => (
+              <div key={idx} className="rounded-lg border border-slate-200 p-2.5">
+                <p className="text-xs text-slate-500">{item.label}</p>
+                <p className="text-xl font-black text-slate-800">{item.value}</p>
+                <p className="text-[11px] text-slate-500">{item.note}</p>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
       {/* Intervention Trails & Blindagem */}

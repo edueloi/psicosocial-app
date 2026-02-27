@@ -34,9 +34,11 @@ interface PersistedFormState {
   description: string;
   successMessage: string;
   fields: FormField[];
+  publicSlug: string;
 }
 
 const STORAGE_KEY = 'forms-center-state-v1';
+const DEFAULT_PUBLIC_SLUG = `form-${Math.random().toString(36).slice(2, 8)}`;
 
 const defaultFields: FormField[] = [
   { id: 'f1', type: 'text', label: 'Nome completo', placeholder: 'Digite seu nome', required: true, helpText: 'Identificação do colaborador.' },
@@ -86,26 +88,32 @@ const quickTemplates: { name: string; fields: FormField[] }[] = [
 ];
 
 const getInitialState = (): PersistedFormState => {
+  const fallbackState: PersistedFormState = {
+    formName: 'Formulário de Avaliação Psicossocial',
+    description: 'Questionário detalhado para coleta de evidências e ações preventivas.',
+    successMessage: 'Obrigado! Suas respostas foram enviadas com sucesso.',
+    fields: defaultFields,
+    publicSlug: DEFAULT_PUBLIC_SLUG,
+  };
+
   if (typeof window === 'undefined') {
-    return {
-      formName: 'Formulário de Avaliação Psicossocial',
-      description: 'Questionário detalhado para coleta de evidências e ações preventivas.',
-      successMessage: 'Obrigado! Suas respostas foram enviadas com sucesso.',
-      fields: defaultFields,
-    };
+    return fallbackState;
   }
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) throw new Error('no persisted form state');
-    return JSON.parse(raw) as PersistedFormState;
-  } catch {
+    const parsed = JSON.parse(raw) as Partial<PersistedFormState>;
+
     return {
-      formName: 'Formulário de Avaliação Psicossocial',
-      description: 'Questionário detalhado para coleta de evidências e ações preventivas.',
-      successMessage: 'Obrigado! Suas respostas foram enviadas com sucesso.',
-      fields: defaultFields,
+      formName: typeof parsed.formName === 'string' && parsed.formName.trim() ? parsed.formName : fallbackState.formName,
+      description: typeof parsed.description === 'string' ? parsed.description : fallbackState.description,
+      successMessage: typeof parsed.successMessage === 'string' ? parsed.successMessage : fallbackState.successMessage,
+      fields: Array.isArray(parsed.fields) && parsed.fields.length > 0 ? parsed.fields : fallbackState.fields,
+      publicSlug: typeof parsed.publicSlug === 'string' && parsed.publicSlug.trim() ? parsed.publicSlug : fallbackState.publicSlug,
     };
+  } catch {
+    return fallbackState;
   }
 };
 
@@ -115,16 +123,17 @@ const FormsCenter: React.FC = () => {
   const [formName, setFormName] = React.useState(initialState.formName);
   const [description, setDescription] = React.useState(initialState.description);
   const [successMessage, setSuccessMessage] = React.useState(initialState.successMessage);
-  const [publicSlug] = React.useState(`form-${Math.random().toString(36).slice(2, 8)}`);
+  const [publicSlug, setPublicSlug] = React.useState(initialState.publicSlug);
   const [copied, setCopied] = React.useState(false);
+  const [importError, setImportError] = React.useState<string | null>(null);
   const [fields, setFields] = React.useState<FormField[]>(initialState.fields);
 
   const publicLink = `https://forms.nr01master.com/${publicSlug}`;
 
   React.useEffect(() => {
-    const state: PersistedFormState = { formName, description, successMessage, fields };
+    const state: PersistedFormState = { formName, description, successMessage, fields, publicSlug };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [formName, description, successMessage, fields]);
+  }, [formName, description, successMessage, fields, publicSlug]);
 
   const addField = (type: FieldType) => {
     const template = fieldTemplates[type];
@@ -171,6 +180,7 @@ const FormsCenter: React.FC = () => {
     try {
       await navigator.clipboard.writeText(publicLink);
       setCopied(true);
+      setImportError(null);
       setTimeout(() => setCopied(false), 1600);
     } catch {
       setCopied(false);
@@ -178,7 +188,7 @@ const FormsCenter: React.FC = () => {
   };
 
   const exportJson = () => {
-    const payload: PersistedFormState = { formName, description, successMessage, fields };
+    const payload: PersistedFormState = { formName, description, successMessage, fields, publicSlug };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -194,16 +204,25 @@ const FormsCenter: React.FC = () => {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const parsed = JSON.parse(String(reader.result)) as PersistedFormState;
+        const parsed = JSON.parse(String(reader.result)) as Partial<PersistedFormState>;
         setFormName(parsed.formName || 'Formulário importado');
         setDescription(parsed.description || 'Descrição importada');
         setSuccessMessage(parsed.successMessage || 'Obrigado!');
-        setFields((parsed.fields || []).map((f, idx) => ({ ...f, id: f.id || `imp-${Date.now()}-${idx}` })));
+        const importedFields = Array.isArray(parsed.fields) ? parsed.fields : [];
+        if (!importedFields.length) {
+          throw new Error('invalid fields');
+        }
+        setFields(importedFields.map((f, idx) => ({ ...f, id: f.id || `imp-${Date.now()}-${idx}` })));
+        if (typeof parsed.publicSlug === 'string' && parsed.publicSlug.trim()) {
+          setPublicSlug(parsed.publicSlug);
+        }
+        setImportError(null);
       } catch {
-        // silently ignore invalid file in demo
+        setImportError('Arquivo inválido. Verifique o JSON e tente novamente.');
       }
     };
     reader.readAsText(file);
+    event.target.value = '';
   };
 
   const resetForm = () => {
@@ -213,6 +232,8 @@ const FormsCenter: React.FC = () => {
     setDescription(fallback.description);
     setSuccessMessage(fallback.successMessage);
     setFields(fallback.fields);
+    setPublicSlug(DEFAULT_PUBLIC_SLUG);
+    setImportError(null);
   };
 
   return (
@@ -261,6 +282,12 @@ const FormsCenter: React.FC = () => {
             </label>
             <button onClick={resetForm} className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-1"><RotateCcw size={12} /> Restaurar</button>
           </div>
+
+          {importError && (
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm text-rose-700 font-medium">
+              {importError}
+            </div>
+          )}
 
           <div>
             <p className="text-sm font-semibold text-slate-700 mb-3">Adicionar novo campo</p>
