@@ -1,6 +1,6 @@
 ﻿
 import React from 'react';
-import { LayoutDashboard, ShieldAlert, ClipboardList, Users, FileText, BrainCircuit, Building2, History, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, ShieldAlert, ClipboardList, Users, FileText, BrainCircuit, Building2, History, ShieldCheck, FileSpreadsheet, ClipboardCheck, Shield, FolderOpen } from 'lucide-react';
 import { UserRole, Tenant, User, ActionStatus, UserStatus } from './types';
 
 export const MOCK_TENANTS: Tenant[] = [
@@ -79,6 +79,10 @@ export const NAV_ITEMS = [
   { id: 'timeline', label: 'Timeline NR-01', icon: <History size={20} />, roles: [UserRole.TENANT_ADMIN, UserRole.RH_MANAGER] },
   { id: 'users', label: 'Usuários', icon: <Users size={20} />, roles: [UserRole.TENANT_ADMIN] },
   { id: 'units', label: 'Unidades', icon: <Building2 size={20} />, roles: [UserRole.TENANT_ADMIN] },
+  { id: 'forms', label: 'Forms Externos', icon: <FileSpreadsheet size={20} />, roles: [UserRole.TENANT_ADMIN, UserRole.SST_CONSULTANT, UserRole.RH_MANAGER] },
+  { id: 'operations', label: 'Operação Mensal', icon: <ClipboardCheck size={20} />, roles: [UserRole.TENANT_ADMIN, UserRole.SST_CONSULTANT, UserRole.RH_MANAGER] },
+  { id: 'documents', label: 'Documentos', icon: <FolderOpen size={20} />, roles: [UserRole.TENANT_ADMIN, UserRole.SST_CONSULTANT, UserRole.RH_MANAGER, UserRole.SUPER_ADMIN] },
+  { id: 'permissions', label: 'Permissões', icon: <Shield size={20} />, roles: [UserRole.TENANT_ADMIN, UserRole.SUPER_ADMIN] },
   { id: 'reports', label: 'Relatórios PGR', icon: <FileText size={20} />, roles: [UserRole.TENANT_ADMIN, UserRole.SST_CONSULTANT] },
 ];
 

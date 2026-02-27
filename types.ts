@@ -72,6 +72,13 @@ export interface User {
   lastAccess?: string;
   lastIp?: string;
   device?: string;
+  permissionProfileId?: string;
+  clientCompanyId?: string;
+}
+
+export interface ClientCompany {
+  id: string;
+  name: string;
 }
 
 export interface RiskHistoryEntry {
@@ -175,3 +182,51 @@ export interface Unit {
 }
 
 
+
+export type AppModuleId = 'dashboard' | 'inventory' | 'actions' | 'psychosocial' | 'audit' | 'timeline' | 'users' | 'units' | 'forms' | 'operations' | 'documents' | 'reports' | 'permissions';
+
+export interface ModulePermissions {
+  view: boolean;
+  create: boolean;
+  edit: boolean;
+  delete: boolean;
+  export: boolean;
+}
+
+export interface UserPreferences {
+  language: 'pt-BR' | 'en-US' | 'es-ES';
+  timezone: string;
+  digestFrequency: 'daily' | 'weekly' | 'monthly';
+  emailAlerts: boolean;
+  pushAlerts: boolean;
+}
+
+export interface UserProfileSettings {
+  fullName: string;
+  email: string;
+  phone: string;
+  roleTitle: string;
+  department: string;
+  bio: string;
+}
+
+
+export interface PermissionProfile {
+  id: string;
+  name: string;
+  parentId?: string | null;
+  access: {
+    externalBlocked: boolean;
+    startTime: string;
+    endTime: string;
+    simultaneousBlocked: boolean;
+    sessionExpirationMin: number;
+  };
+  permissions: Record<AppModuleId, ModulePermissions>;
+}
+
+
+export interface CompanyPermissionAssignment {
+  companyId: string;
+  permissionProfileId: string;
+}

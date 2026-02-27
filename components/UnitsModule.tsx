@@ -1,13 +1,13 @@
 ﻿
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   Building2, Plus, ChevronRight, Users, Shield, Factory, 
   MapPin, MoreVertical, Search, Filter, User, Calendar, 
   ShieldAlert, AlertTriangle, CheckCircle2, Archive, 
-  Settings2, LayoutGrid, Info, Eye, ExternalLink, History,
+  Settings2, LayoutGrid, Info, X, Eye, ExternalLink, History,
   ShieldCheck, BrainCircuit, Activity, ClipboardList
 } from 'lucide-react';
-import { Unit, Sector } from '../types';
+import { Unit } from '../types';
 import { useAppData } from '../appData';
 import Button from './Button';
 import Modal from './Modal';
@@ -107,18 +107,126 @@ const UnitsModule: React.FC = () => {
   const [targetUnitId, setTargetUnitId] = useState<string | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
+  const [units, setUnits] = useState<Unit[]>(MOCK_STRUCTURE);
+  const [unitError, setUnitError] = useState<string | null>(null);
+  const [sectorError, setSectorError] = useState<string | null>(null);
+  const [unitDraft, setUnitDraft] = useState({
+    name: '',
+    address: '',
+    responsible: '',
+    type: 'Unidade Industrial',
+    status: 'Ativo' as Unit['status'],
+  });
+  const [sectorDraft, setSectorDraft] = useState({
+    name: '',
+    responsible: '',
+    employees: 1,
+    risksCount: 0,
+    status: 'Ativo' as Unit['status'],
+  });
   const { navigate } = useAppData();
 
   const stats = [
-    { label: 'Total Unidades', value: MOCK_STRUCTURE.length, icon: <Building2 size={16}/>, color: 'text-slate-600' },
-    { label: 'Setores Mapeados', value: MOCK_STRUCTURE.reduce((acc, u) => acc + u.sectors.length, 0), icon: <LayoutGrid size={16}/>, color: 'text-indigo-600' },
-    { label: 'Colaboradores', value: MOCK_STRUCTURE.reduce((acc, u) => acc + u.sectors.reduce((sAcc, s) => sAcc + s.employees, 0), 0), icon: <Users size={16}/>, color: 'text-slate-600' },
-    { label: 'Setores Críticos', value: MOCK_STRUCTURE.reduce((acc, u) => acc + u.sectors.filter(s => s.hasCriticalRisk).length, 0), icon: <ShieldAlert size={16}/>, color: 'text-rose-600' },
+    { label: 'Total Unidades', value: units.length, icon: <Building2 size={16}/>, color: 'text-slate-600' },
+    { label: 'Setores Mapeados', value: units.reduce((acc, u) => acc + u.sectors.length, 0), icon: <LayoutGrid size={16}/>, color: 'text-indigo-600' },
+    { label: 'Colaboradores', value: units.reduce((acc, u) => acc + u.sectors.reduce((sAcc, s) => sAcc + s.employees, 0), 0), icon: <Users size={16}/>, color: 'text-slate-600' },
+    { label: 'Setores Críticos', value: units.reduce((acc, u) => acc + u.sectors.filter(s => s.hasCriticalRisk).length, 0), icon: <ShieldAlert size={16}/>, color: 'text-rose-600' },
   ];
+
+  const targetUnitName = useMemo(
+    () => units.find((unit) => unit.id === targetUnitId)?.name || 'Nenhuma',
+    [units, targetUnitId],
+  );
 
   const handleOpenSectorModal = (unitId: string) => {
     setTargetUnitId(unitId);
+    setSectorError(null);
     setShowSectorModal(true);
+  };
+
+  const handleCreateUnit = () => {
+    const normalizedName = unitDraft.name.trim();
+    const normalizedAddress = unitDraft.address.trim();
+    const normalizedResponsible = unitDraft.responsible.trim();
+
+    if (!normalizedName || !normalizedAddress || !normalizedResponsible) {
+      setUnitError('Preencha nome, endereço e responsável para cadastrar a unidade.');
+      return;
+    }
+
+    const unitAlreadyExists = units.some((unit) => unit.name.trim().toLowerCase() === normalizedName.toLowerCase());
+    if (unitAlreadyExists) {
+      setUnitError('Já existe uma unidade com este nome.');
+      return;
+    }
+
+    const newUnit: Unit = {
+      id: `u-${Date.now()}`,
+      name: normalizedName,
+      address: normalizedAddress,
+      responsible: normalizedResponsible,
+      type: unitDraft.type,
+      status: unitDraft.status,
+      sectors: [],
+    };
+
+    setUnits((prev) => [newUnit, ...prev]);
+    setUnitDraft({ name: '', address: '', responsible: '', type: 'Unidade Industrial', status: 'Ativo' });
+    setUnitError(null);
+    setShowUnitModal(false);
+  };
+
+  const handleCreateSector = () => {
+    if (!targetUnitId) {
+      setSectorError('Selecione uma unidade antes de cadastrar o setor.');
+      return;
+    }
+
+    const normalizedName = sectorDraft.name.trim();
+    const normalizedResponsible = sectorDraft.responsible.trim();
+
+    if (!normalizedName || !normalizedResponsible || sectorDraft.employees < 1) {
+      setSectorError('Informe nome, responsável e efetivo válido para o setor.');
+      return;
+    }
+
+    const targetUnit = units.find((unit) => unit.id === targetUnitId);
+    const sectorAlreadyExists = targetUnit?.sectors.some((sector) => sector.name.trim().toLowerCase() === normalizedName.toLowerCase());
+
+    if (sectorAlreadyExists) {
+      setSectorError('Já existe um setor com este nome nesta unidade.');
+      return;
+    }
+
+    const now = new Date();
+    const nextYear = new Date(now);
+    nextYear.setFullYear(nextYear.getFullYear() + 1);
+
+    setUnits((prev) => prev.map((unit) => {
+      if (unit.id !== targetUnitId) return unit;
+      return {
+        ...unit,
+        sectors: [
+          {
+            id: `s-${Date.now()}`,
+            name: normalizedName,
+            responsible: normalizedResponsible,
+            employees: sectorDraft.employees,
+            risksCount: sectorDraft.risksCount,
+            hasCriticalRisk: sectorDraft.risksCount > 0,
+            status: sectorDraft.status,
+            lastReviewDate: now.toISOString().slice(0, 10),
+            nextReviewDate: nextYear.toISOString().slice(0, 10),
+            reviewOverdue: false,
+          },
+          ...unit.sectors,
+        ],
+      };
+    }));
+
+    setSectorDraft({ name: '', responsible: '', employees: 1, risksCount: 0, status: 'Ativo' });
+    setSectorError(null);
+    setShowSectorModal(false);
   };
 
   return (
@@ -183,7 +291,7 @@ const UnitsModule: React.FC = () => {
 
       {/* Units List */}
       <div className="space-y-6">
-        {MOCK_STRUCTURE.map((unit) => (
+        {units.map((unit) => (
           <div key={unit.id} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
             {/* Unit Header */}
             <div className="p-6 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -368,7 +476,7 @@ const UnitsModule: React.FC = () => {
                   <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest opacity-80 mt-2">Cadastro de Localização Estratégica</p>
                 </div>
               </div>
-              <button onClick={() => setShowUnitModal(false)} className="hover:rotate-90 transition-transform p-2 bg-white/10 rounded-xl">
+              <button onClick={() => { setShowUnitModal(false); setUnitError(null); }} className="hover:rotate-90 transition-transform p-2 bg-white/10 rounded-xl">
                 <X size={24} />
               </button>
             </div>
@@ -376,25 +484,21 @@ const UnitsModule: React.FC = () => {
               <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Nome Fantasia da Unidade</label>
-                  <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Ex: Planta Industrial Sul" />
+                  <input value={unitDraft.name} onChange={(e) => setUnitDraft((prev) => ({ ...prev, name: e.target.value }))} type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Ex: Planta Industrial Sul" />
                 </div>
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Endereço Completo</label>
-                  <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Rua, Número, Bairro, Cidade - UF" />
+                  <input value={unitDraft.address} onChange={(e) => setUnitDraft((prev) => ({ ...prev, address: e.target.value }))} type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Rua, Número, Bairro, Cidade - UF" />
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Responsável (Gestor)</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
-                    <option>Selecione um gestor...</option>
-                    <option>Eng. Roberto Santos</option>
-                    <option>Ana Oliveira</option>
-                  </select>
+                  <input value={unitDraft.responsible} onChange={(e) => setUnitDraft((prev) => ({ ...prev, responsible: e.target.value }))} type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Ex: Eng. Roberto Santos" />
                 </div>
                 <div className="col-span-2 md:col-span-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Tipo de Local</label>
-                  <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
-                    <option>Industrial</option>
-                    <option>Administrativo</option>
+                  <select value={unitDraft.type} onChange={(e) => setUnitDraft((prev) => ({ ...prev, type: e.target.value }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
+                    <option>Unidade Industrial</option>
+                    <option>Escritório</option>
                     <option>Depósito / CD</option>
                     <option>Obra Temporária</option>
                   </select>
@@ -408,12 +512,14 @@ const UnitsModule: React.FC = () => {
                 </p>
               </div>
 
+              {unitError && <p className="text-xs font-bold text-rose-600">{unitError}</p>}
+
               <div className="flex gap-4 pt-4">
-                <button onClick={() => setShowUnitModal(false)} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">
+                <button onClick={() => { setShowUnitModal(false); setUnitError(null); }} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">
                   Cancelar
                 </button>
                 <button 
-                  onClick={() => setShowUnitModal(false)}
+                  onClick={handleCreateUnit}
                   className="flex-1 px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all"
                 >
                   Confirmar Cadastro
@@ -438,7 +544,7 @@ const UnitsModule: React.FC = () => {
                   <p className="text-[10px] text-indigo-100 font-bold uppercase tracking-widest opacity-80 mt-2">Vinculação Hierárquica e Mapeamento NR-01</p>
                 </div>
               </div>
-              <button onClick={() => setShowSectorModal(false)} className="hover:rotate-90 transition-transform p-2 bg-white/10 rounded-xl">
+              <button onClick={() => { setShowSectorModal(false); setSectorError(null); }} className="hover:rotate-90 transition-transform p-2 bg-white/10 rounded-xl">
                 <X size={24} />
               </button>
             </div>
@@ -453,29 +559,24 @@ const UnitsModule: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Nome do Setor / Área</label>
-                    <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Ex: Produção de Usinagem B" />
+                    <input value={sectorDraft.name} onChange={(e) => setSectorDraft((prev) => ({ ...prev, name: e.target.value }))} type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Ex: Produção de Usinagem B" />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Status Operacional</label>
-                    <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
+                    <select value={sectorDraft.status} onChange={(e) => setSectorDraft((prev) => ({ ...prev, status: e.target.value as Unit['status'] }))} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
                       <option>Ativo</option>
                       <option>Em Reestruturação</option>
-                      <option>Inativo (Somente Histórico)</option>
+                      <option>Inativo</option>
                     </select>
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Gestor Responsável (Local)</label>
-                    <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
-                      <option>Selecione um gestor disponível...</option>
-                      <option>Marco Silva</option>
-                      <option>Carla Dias</option>
-                      <option>Júlio Neves</option>
-                    </select>
+                    <input value={sectorDraft.responsible} onChange={(e) => setSectorDraft((prev) => ({ ...prev, responsible: e.target.value }))} type="text" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="Ex: Marco Silva" />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Unidade Vinculada</label>
                     <div className="w-full bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold text-slate-400 cursor-not-allowed">
-                       {MOCK_STRUCTURE.find(u => u.id === targetUnitId)?.name || 'Nenhuma'}
+                       {targetUnitName}
                     </div>
                   </div>
                 </div>
@@ -501,15 +602,11 @@ const UnitsModule: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Nº de Colaboradores</label>
-                      <input type="number" className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="0" />
+                      <input value={sectorDraft.employees} onChange={(e) => setSectorDraft((prev) => ({ ...prev, employees: Math.max(1, Number(e.target.value) || 1) }))} type="number" min={1} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="0" />
                     </div>
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Tipo de Vínculo</label>
-                      <select className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none appearance-none">
-                        <option>CLT Próprio</option>
-                        <option>Terceirizado</option>
-                        <option>Misto (CLT + Terc)</option>
-                      </select>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Nº de Riscos Mapeados</label>
+                      <input value={sectorDraft.risksCount} onChange={(e) => setSectorDraft((prev) => ({ ...prev, risksCount: Math.max(0, Number(e.target.value) || 0) }))} type="number" min={0} className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-5 py-3.5 text-sm font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" placeholder="0" />
                     </div>
                   </div>
                   <div className="col-span-2">
@@ -585,12 +682,14 @@ const UnitsModule: React.FC = () => {
                 </div>
               </div>
 
+              {sectorError && <p className="text-xs font-bold text-rose-600">{sectorError}</p>}
+
               <div className="flex gap-4 pt-6 border-t border-slate-100">
-                <button onClick={() => setShowSectorModal(false)} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">
+                <button onClick={() => { setShowSectorModal(false); setSectorError(null); }} className="flex-1 px-8 py-4 bg-slate-100 text-slate-600 font-black text-xs uppercase rounded-2xl hover:bg-slate-200 transition-all">
                   Cancelar
                 </button>
                 <button 
-                  onClick={() => setShowSectorModal(false)}
+                  onClick={handleCreateSector}
                   className="flex-[2] px-8 py-4 bg-indigo-600 text-white font-black text-xs uppercase rounded-2xl hover:bg-indigo-700 shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-3"
                 >
                   <ClipboardList size={18} /> Salvar e Criar Estrutura
