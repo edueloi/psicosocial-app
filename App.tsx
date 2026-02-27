@@ -303,7 +303,7 @@ const App: React.FC = () => {
     if (!activePermissions[activeTab]?.view) return <div className="p-10 text-center text-rose-500 font-semibold">{noAccessMessage}</div>;
 
     switch (activeTab) {
-      case 'dashboard': return <Dashboard vision={vision} />;
+      case 'dashboard': return <Dashboard vision={vision} userRole={currentUser.role} />;
       case 'inventory': return <Inventory vision={vision} />;
       case 'actions': return <ActionPlan />;
       case 'psychosocial': return <PsychosocialModule vision={vision} />;

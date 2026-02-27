@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -22,31 +22,38 @@ import {
 } from 'recharts';
 import {
   Activity,
+  ArrowDown,
+  ArrowUp,
   CalendarClock,
-  CircleCheck,
+  CheckCircle2,
   ClipboardList,
   Eye,
   HeartPulse,
+  LayoutGrid,
   ShieldAlert,
   Stethoscope,
   TrendingUp,
   Users,
 } from 'lucide-react';
 import { useAppData } from '../appData';
-import { ActionStatus } from '../types';
+import { ActionStatus, UserRole } from '../types';
 
 interface DashboardProps {
   vision?: 'tech' | 'exec';
+  userRole?: UserRole;
 }
 
-const evolutionData = [
-  { year: '2020', baseline: 82, atual: 70 },
-  { year: '2021', baseline: 82, atual: 63 },
-  { year: '2022', baseline: 82, atual: 55 },
-  { year: '2023', baseline: 82, atual: 47 },
-  { year: '2024', baseline: 82, atual: 38 },
-  { year: '2025', baseline: 82, atual: 31 },
-];
+type DashboardMode = 'traditional' | 'operational' | 'custom';
+
+type WidgetId = 'kpis' | 'participation' | 'riskMatrix' | 'lostDays' | 'campaigns' | 'admission' | 'actionStatus' | 'psychosocial';
+
+type WidgetConfig = {
+  id: WidgetId;
+  title: string;
+  allowedRoles: UserRole[];
+};
+
+const WIDGET_STORAGE_KEY = 'dashboard-custom-widgets-v1';
 
 const participationData = [
   { month: 'Jan', adesao: 72 },
@@ -59,39 +66,21 @@ const participationData = [
   { month: 'Ago', adesao: 84 },
 ];
 
-const ambulatoryData = [
-  { sector: 'Toyota 452', ombro: 18, coluna: 24, joelho: 12 },
-  { sector: 'Usina Pilon', ombro: 14, coluna: 21, joelho: 9 },
-  { sector: 'Logística', ombro: 10, coluna: 16, joelho: 7 },
-  { sector: 'Administrativo', ombro: 6, coluna: 8, joelho: 4 },
-];
-
-const preventionData = [
-  { month: 'Jan', momentaneas: 37, reabilitados: 26 },
-  { month: 'Fev', momentaneas: 40, reabilitados: 29 },
-  { month: 'Mar', momentaneas: 34, reabilitados: 28 },
-  { month: 'Abr', momentaneas: 31, reabilitados: 25 },
-  { month: 'Mai', momentaneas: 29, reabilitados: 24 },
-  { month: 'Jun', momentaneas: 27, reabilitados: 23 },
-];
-
-const cidAbsenceData = [
-  { cid: 'F', ate15: 41, acima15: 13 },
-  { cid: 'G', ate15: 33, acima15: 9 },
-  { cid: 'I', ate15: 26, acima15: 8 },
-];
-
 const riskMatrixData = [
   { sector: 'Fundição', risco: 92 },
   { sector: 'Prensas', risco: 84 },
   { sector: 'Montagem', risco: 66 },
   { sector: 'Expedição', risco: 58 },
-  { sector: 'Adm', risco: 31 },
+  { sector: 'Admin', risco: 31 },
 ];
 
-const admissionData = [
-  { name: 'Recomendados', value: 847 },
-  { name: 'Não recomendados', value: 153 },
+const lostDaysData = [
+  { month: 'Jan', cidF: 35, cidG: 38, cidI: 23 },
+  { month: 'Fev', cidF: 32, cidG: 34, cidI: 21 },
+  { month: 'Mar', cidF: 27, cidG: 31, cidI: 21 },
+  { month: 'Abr', cidF: 25, cidG: 29, cidI: 19 },
+  { month: 'Mai', cidF: 23, cidG: 27, cidI: 18 },
+  { month: 'Jun', cidF: 21, cidG: 25, cidI: 18 },
 ];
 
 const campaignData = [
@@ -101,32 +90,76 @@ const campaignData = [
   { item: 'Demais campanhas', progresso: 84 },
 ];
 
-const flexibilityData = [
-  { year: '2021', indice: 61 },
-  { year: '2022', indice: 67 },
-  { year: '2023', indice: 72 },
-  { year: '2024', indice: 78 },
-  { year: '2025', indice: 83 },
+const admissionData = [
+  { name: 'Recomendados', value: 847 },
+  { name: 'Não recomendados', value: 153 },
 ];
 
-const lostDaysData = [
-  { month: 'Jan', diasPerdidos: 96, cidF: 35, cidG: 38, cidI: 23 },
-  { month: 'Fev', diasPerdidos: 87, cidF: 32, cidG: 34, cidI: 21 },
-  { month: 'Mar', diasPerdidos: 79, cidF: 27, cidG: 31, cidI: 21 },
-  { month: 'Abr', diasPerdidos: 73, cidF: 25, cidG: 29, cidI: 19 },
-  { month: 'Mai', diasPerdidos: 68, cidF: 23, cidG: 27, cidI: 18 },
-  { month: 'Jun', diasPerdidos: 64, cidF: 21, cidG: 25, cidI: 18 },
+const psychosocialData = [
+  { month: 'Jan', risco: 41 },
+  { month: 'Fev', risco: 36 },
+  { month: 'Mar', risco: 33 },
+  { month: 'Abr', risco: 31 },
+  { month: 'Mai', risco: 28 },
+  { month: 'Jun', risco: 24 },
 ];
 
 const PIE_COLORS = ['#16a34a', '#ef4444'];
 
-const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
-  const [includePsychosocial, setIncludePsychosocial] = useState(true);
+const roleLabel: Record<UserRole, string> = {
+  SUPER_ADMIN: 'Super Admin',
+  TENANT_ADMIN: 'Admin Tenant',
+  ADMINISTRATOR: 'Administrador',
+  SST_CONSULTANT: 'Consultor SST',
+  RH_MANAGER: 'Gestor RH',
+  AUDITOR: 'Auditor',
+  EMPLOYEE: 'Colaborador',
+};
+
+const widgetCatalog: WidgetConfig[] = [
+  { id: 'kpis', title: 'KPIs Operacionais', allowedRoles: Object.values(UserRole) },
+  { id: 'participation', title: 'Adesão por mês', allowedRoles: [UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.SST_CONSULTANT, UserRole.RH_MANAGER] },
+  { id: 'riskMatrix', title: 'Matriz de Risco', allowedRoles: [UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.SST_CONSULTANT, UserRole.AUDITOR] },
+  { id: 'lostDays', title: 'Dias perdidos por CID', allowedRoles: [UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.SST_CONSULTANT, UserRole.RH_MANAGER] },
+  { id: 'campaigns', title: 'Campanhas anuais', allowedRoles: [UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.RH_MANAGER] },
+  { id: 'admission', title: 'Admissional recomendado x não', allowedRoles: [UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.SST_CONSULTANT] },
+  { id: 'actionStatus', title: 'Status do Plano de Ação', allowedRoles: Object.values(UserRole) },
+  { id: 'psychosocial', title: 'Risco psicossocial', allowedRoles: [UserRole.SUPER_ADMIN, UserRole.TENANT_ADMIN, UserRole.RH_MANAGER, UserRole.SST_CONSULTANT] },
+];
+
+const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech', userRole = UserRole.TENANT_ADMIN }) => {
+  const [mode, setMode] = useState<DashboardMode>('traditional');
   const { actions } = useAppData();
+
+  const allowedWidgets = useMemo(
+    () => widgetCatalog.filter((widget) => widget.allowedRoles.includes(userRole)),
+    [userRole],
+  );
+
+  const [selectedWidgets, setSelectedWidgets] = useState<WidgetId[]>(() => {
+    if (typeof window === 'undefined') return ['kpis', 'actionStatus', 'participation', 'riskMatrix'];
+    try {
+      const raw = localStorage.getItem(WIDGET_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) && parsed.length ? parsed : ['kpis', 'actionStatus', 'participation', 'riskMatrix'];
+    } catch {
+      return ['kpis', 'actionStatus', 'participation', 'riskMatrix'];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(selectedWidgets));
+  }, [selectedWidgets]);
+
+  useEffect(() => {
+    setSelectedWidgets((prev) => prev.filter((id) => allowedWidgets.some((w) => w.id === id)));
+  }, [allowedWidgets]);
 
   const metrics = useMemo(() => {
     const totalActions = actions.length || 1;
     const completed = actions.filter((action) => action.status === ActionStatus.COMPLETED).length;
+    const inProgress = actions.filter((action) => action.status === ActionStatus.IN_PROGRESS).length;
+    const pending = actions.filter((action) => action.status === ActionStatus.PENDING).length;
     const evidenceCoverage = Math.round((actions.filter((action) => action.evidenceCount > 0).length / totalActions) * 100);
     const overdue = actions.filter((action) => new Date(action.dueDate) < new Date() && action.status !== ActionStatus.COMPLETED).length;
 
@@ -135,294 +168,279 @@ const Dashboard: React.FC<DashboardProps> = ({ vision = 'tech' }) => {
       evidenceCoverage,
       overdue,
       totalActions: actions.length,
+      inProgress,
+      pending,
+      completed,
     };
   }, [actions]);
 
-  const avgParticipation = Math.round(participationData.reduce((sum, item) => sum + item.adesao, 0) / participationData.length);
-  const rehabRate = Math.round(
-    (preventionData.reduce((sum, item) => sum + item.reabilitados, 0) /
-      preventionData.reduce((sum, item) => sum + item.momentaneas, 0)) *
-      100,
-  );
+  const statusData = [
+    { name: 'Pendente', total: metrics.pending },
+    { name: 'Andamento', total: metrics.inProgress },
+    { name: 'Concluído', total: metrics.completed },
+  ];
 
-  const totalLostDays = lostDaysData.reduce((sum, item) => sum + item.diasPerdidos, 0);
+  const toggleWidget = (id: WidgetId) => {
+    setSelectedWidgets((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  };
+
+  const moveWidget = (id: WidgetId, dir: 'up' | 'down') => {
+    setSelectedWidgets((prev) => {
+      const index = prev.indexOf(id);
+      if (index === -1) return prev;
+      const nextIndex = dir === 'up' ? index - 1 : index + 1;
+      if (nextIndex < 0 || nextIndex >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
+    });
+  };
+
+  const renderWidget = (id: WidgetId) => {
+    if (id === 'kpis') {
+      const cards = [
+        { label: 'Ações totais', value: metrics.totalActions, icon: <ClipboardList size={16} className="text-indigo-600" />, tone: 'bg-indigo-50 border-indigo-200' },
+        { label: 'Cobertura de evidências', value: `${metrics.evidenceCoverage}%`, icon: <CheckCircle2 size={16} className="text-emerald-600" />, tone: 'bg-emerald-50 border-emerald-200' },
+        { label: 'Vencidas', value: metrics.overdue, icon: <ShieldAlert size={16} className="text-rose-600" />, tone: 'bg-rose-50 border-rose-200' },
+        { label: 'Taxa de conclusão', value: `${metrics.completionRate}%`, icon: <TrendingUp size={16} className="text-amber-600" />, tone: 'bg-amber-50 border-amber-200' },
+      ];
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {cards.map((card) => (
+            <article key={card.label} className={`rounded-xl border p-4 ${card.tone}`}>
+              <div className="flex items-center justify-between"><p className="text-xs uppercase font-bold text-slate-500">KPI</p>{card.icon}</div>
+              <p className="text-2xl font-black text-slate-900 mt-2">{card.value}</p>
+              <p className="text-sm font-semibold text-slate-700">{card.label}</p>
+            </article>
+          ))}
+        </div>
+      );
+    }
+
+    if (id === 'participation') {
+      return (
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={participationData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
+              <Tooltip formatter={(value) => [`${value}%`, 'Adesão']} />
+              <ReferenceLine y={80} stroke="#f59e0b" strokeDasharray="5 5" label={{ value: 'Meta 80%', position: 'insideTopRight', fontSize: 11 }} />
+              <Bar dataKey="adesao" fill="#4f46e5" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    if (id === 'riskMatrix') {
+      return (
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={riskMatrixData}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey="sector" tick={{ fontSize: 11 }} />
+              <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
+              <Radar name="Risco" dataKey="risco" stroke="#f43f5e" fill="#fb7185" fillOpacity={0.35} />
+              <Tooltip formatter={(value) => [`${value} pts`, 'Risco']} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    if (id === 'lostDays') {
+      return (
+        <div className="h-72">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={lostDaysData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="cidF" stackId="lost" fill="#a855f7" name="CID F" />
+              <Bar dataKey="cidG" stackId="lost" fill="#3b82f6" name="CID G" />
+              <Bar dataKey="cidI" stackId="lost" fill="#14b8a6" name="CID I" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    if (id === 'campaigns') {
+      return (
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={campaignData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="item" width={120} tick={{ fontSize: 11 }} />
+              <Tooltip formatter={(value) => [`${value}%`, 'Progresso']} />
+              <Bar dataKey="progresso" fill="#14b8a6" radius={[0, 8, 8, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    if (id === 'admission') {
+      return (
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={admissionData} dataKey="value" nameKey="name" innerRadius={65} outerRadius={100} paddingAngle={3}>
+                {admissionData.map((_, idx) => <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />)}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    if (id === 'actionStatus') {
+      return (
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={statusData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="total" fill="#0ea5e9" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    }
+
+    return (
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={psychosocialData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip />
+            <Line type="monotone" dataKey="risco" stroke="#ef4444" strokeWidth={2.5} name="Risco psicossocial" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">
-            {vision === 'exec' ? 'Resultados Integrados da Operação Atividade' : 'Dashboard Integrado: Ginástica, Ergonomia, Fisioterapia e NR1'}
-          </h2>
-          <p className="text-slate-600 text-sm mt-1">
-            Indicadores em tempo real para eliminar retrabalho de planilha, acelerar decisões e fortalecer auditorias com evidências.
-          </p>
+          <h2 className="text-2xl font-bold text-slate-900">{vision === 'exec' ? 'Dashboard Executivo' : 'Dashboard Integrado de Performance'}</h2>
+          <p className="text-slate-600 text-sm mt-1">Tradicional, operacional e personalizado com componentes liberados conforme o acesso.</p>
         </div>
-
-        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit">
-          <button
-            onClick={() => setIncludePsychosocial(true)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-              includePsychosocial ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            C/ Psicossocial
-          </button>
-          <button
-            onClick={() => setIncludePsychosocial(false)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-              !includePsychosocial ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-            }`}
-          >
-            S/ Psicossocial
-          </button>
+        <div className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-600 uppercase inline-flex items-center gap-2">
+          <Users size={14} /> acesso: {roleLabel[userRole]}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        {[
-          {
-            label: 'Adesão média na ginástica',
-            value: `${avgParticipation}%`,
-            note: 'Meta contratual: > 80%',
-            icon: <Users size={18} />,
-            tone: 'text-indigo-700 bg-indigo-50 border-indigo-200',
-          },
-          {
-            label: 'Reabilitados sem afastamento',
-            value: `${rehabRate}%`,
-            note: 'Queixas momentâneas tratadas preventivamente',
-            icon: <HeartPulse size={18} />,
-            tone: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-          },
-          {
-            label: 'Planos com evidência (foto/doc)',
-            value: `${metrics.evidenceCoverage}%`,
-            note: `${metrics.totalActions} ações ativas no plano`,
-            icon: <CircleCheck size={18} />,
-            tone: 'text-sky-700 bg-sky-50 border-sky-200',
-          },
-          {
-            label: 'Pendências fora do prazo',
-            value: `${metrics.overdue}`,
-            note: `Execução geral: ${metrics.completionRate}% concluída`,
-            icon: <CalendarClock size={18} />,
-            tone: 'text-rose-700 bg-rose-50 border-rose-200',
-          },
-        ].map((card) => (
-          <article key={card.label} className={`rounded-2xl border p-4 ${card.tone}`}>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs uppercase font-semibold tracking-[0.12em] opacity-80">KPI</p>
-              {card.icon}
-            </div>
-            <p className="text-3xl font-black mb-1">{card.value}</p>
-            <p className="text-sm font-semibold">{card.label}</p>
-            <p className="text-xs mt-1 opacity-80">{card.note}</p>
-          </article>
+      <div className="flex gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit">
+        {([
+          ['traditional', 'Tradicional'],
+          ['operational', 'Operacional'],
+          ['custom', 'Personalizado'],
+        ] as [DashboardMode, string][]).map(([id, label]) => (
+          <button key={id} onClick={() => setMode(id)} className={`px-4 py-2 text-xs font-semibold rounded-lg ${mode === id ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-600'}`}>{label}</button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        <section className="xl:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-900">1) Evolução de Queixas Musculares (Linha de Base)</h3>
-          <p className="text-xs text-slate-500 mb-4">Comparativo histórico entre início de contrato (linha vermelha) e cenário atual (linha azul).</p>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={evolutionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="year" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="baseline" stroke="#ef4444" strokeWidth={2.5} name="Linha base (início contrato)" />
-                <Line type="monotone" dataKey="atual" stroke="#2563eb" strokeWidth={3} name="Situação atual" />
-              </LineChart>
-            </ResponsiveContainer>
+      {mode !== 'custom' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <article className="bg-slate-900 text-white rounded-2xl p-5 shadow-sm">
+            <h3 className="font-bold mb-3">Fluxo operacional mensal</h3>
+            <ul className="space-y-3 text-sm">
+              <li className="flex gap-2"><ClipboardList size={16} className="mt-0.5 text-indigo-300" /> Entrada até dia 10: equipes lançam dados direto no sistema.</li>
+              <li className="flex gap-2"><Activity size={16} className="mt-0.5 text-indigo-300" /> Processamento automático de gráficos e comparativos por setor.</li>
+              <li className="flex gap-2"><Eye size={16} className="mt-0.5 text-indigo-300" /> Portal cliente com acesso leitura para engenharia/RH.</li>
+              <li className="flex gap-2"><HeartPulse size={16} className="mt-0.5 text-indigo-300" /> Monitoramento psicossocial e preventivo contínuo.</li>
+              <li className="flex gap-2"><CalendarClock size={16} className="mt-0.5 text-indigo-300" /> Agenda mensal com checkpoints e evidências.</li>
+              <li className="flex gap-2"><Stethoscope size={16} className="mt-0.5 text-indigo-300" /> Embrião NR1 com acompanhamento de saúde ocupacional.</li>
+            </ul>
+          </article>
+          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="font-bold text-slate-900 mb-3">Status do Plano de Ação</h3>
+            {renderWidget('actionStatus')}
           </div>
-        </section>
+        </div>
+      )}
 
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-900">2) Adesão por mês</h3>
-          <p className="text-xs text-slate-500 mb-4">Participação na ginástica laboral com meta de 80%.</p>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={participationData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} domain={[0, 100]} />
-                <Tooltip formatter={(value) => [`${value}%`, 'Adesão']} />
-                <ReferenceLine y={80} stroke="#f59e0b" strokeDasharray="5 5" label={{ value: 'Meta 80%', position: 'insideTopRight', fontSize: 11 }} />
-                <Bar dataKey="adesao" fill="#4f46e5" radius={[8, 8, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      </div>
+      {mode === 'traditional' && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+          <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="font-bold text-slate-900 mb-2">Adesão por mês</h3>
+            {renderWidget('participation')}
+          </section>
+          <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="font-bold text-slate-900 mb-2">Matriz de risco biomecânico</h3>
+            {renderWidget('riskMatrix')}
+          </section>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-900">3) Queixas ambulatoriais por setor e estrutura corporal</h3>
-          <p className="text-xs text-slate-500 mb-4">Visão para priorizar intervenção ergonômica e fisioterapêutica.</p>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ambulatoryData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="sector" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="ombro" stackId="a" fill="#f97316" name="Ombro" />
-                <Bar dataKey="coluna" stackId="a" fill="#0ea5e9" name="Coluna" />
-                <Bar dataKey="joelho" stackId="a" fill="#22c55e" name="Joelho" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
+      {mode === 'operational' && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+          <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="font-bold text-slate-900 mb-2">Dias perdidos por CID</h3>
+            {renderWidget('lostDays')}
+          </section>
+          <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <h3 className="font-bold text-slate-900 mb-2">Campanhas anuais</h3>
+            {renderWidget('campaigns')}
+          </section>
+        </div>
+      )}
 
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-900">4) Queixas momentâneas x reabilitados</h3>
-          <p className="text-xs text-slate-500 mb-4">Indicador preventivo para evitar afastamentos acima de 15 dias.</p>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={preventionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="momentaneas" stroke="#ef4444" strokeWidth={2.5} name="Queixas momentâneas" />
-                <Line type="monotone" dataKey="reabilitados" stroke="#16a34a" strokeWidth={2.5} name="Reabilitados" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      </div>
+      {mode === 'custom' && (
+        <div className="grid grid-cols-1 xl:grid-cols-[340px_1fr] gap-5">
+          <aside className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-4">
+            <h3 className="font-black text-slate-900 inline-flex items-center gap-2"><LayoutGrid size={16} /> Personalizar Dashboard</h3>
+            <p className="text-xs text-slate-500">Selecione componentes permitidos para seu acesso e organize a ordem de exibição.</p>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-900">5) Absenteísmo por CID (F, G, I)</h3>
-          <p className="text-xs text-slate-500 mb-4">Separação por afastamentos até 15 dias e acima de 15 dias.</p>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={cidAbsenceData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="cid" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="ate15" fill="#0ea5e9" name="Até 15 dias" />
-                <Bar dataKey="acima15" fill="#8b5cf6" name="> 15 dias" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
+            <div className="space-y-2">
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Componentes disponíveis</p>
+              {allowedWidgets.map((widget) => (
+                <label key={widget.id} className="flex items-center justify-between border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium">
+                  <span>{widget.title}</span>
+                  <input type="checkbox" checked={selectedWidgets.includes(widget.id)} onChange={() => toggleWidget(widget.id)} />
+                </label>
+              ))}
+            </div>
 
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-900">6) Matriz de Risco Biomecânico</h3>
-          <p className="text-xs text-slate-500 mb-4">Classificação de risco por setor na fase de implantação.</p>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={riskMatrixData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="sector" tick={{ fontSize: 11 }} />
-                <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
-                <Radar name="Risco biomecânico" dataKey="risco" stroke="#f43f5e" fill="#fb7185" fillOpacity={0.35} />
-                <Tooltip formatter={(value) => [`${value} pts`, 'Risco']} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
+            <div className="space-y-2">
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Ordem atual</p>
+              {selectedWidgets.map((id, idx) => (
+                <div key={id} className="border border-slate-200 rounded-xl p-2 flex items-center justify-between gap-2">
+                  <span className="text-xs font-semibold text-slate-700">{idx + 1}. {widgetCatalog.find((w) => w.id === id)?.title}</span>
+                  <div className="flex gap-1">
+                    <button onClick={() => moveWidget(id, 'up')} className="p-1 rounded-md hover:bg-slate-100"><ArrowUp size={14} /></button>
+                    <button onClick={() => moveWidget(id, 'down')} className="p-1 rounded-md hover:bg-slate-100"><ArrowDown size={14} /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </aside>
 
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-900">7) Recomendados x Não recomendados</h3>
-          <p className="text-xs text-slate-500 mb-4">Resultado da avaliação admissional cinesiofuncional.</p>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={admissionData} dataKey="value" nameKey="name" innerRadius={65} outerRadius={100} paddingAngle={3}>
-                  {admissionData.map((_, idx) => (
-                    <Cell key={idx} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      </div>
-
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-900">8) Teste de flexibilidade (anual)</h3>
-          <p className="text-xs text-slate-500 mb-4">Quanto maior o índice de flexibilidade, menor a chance de lesão osteomuscular.</p>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={flexibilityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="year" tick={{ fontSize: 12 }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value) => [`${value}%`, 'Índice']} />
-                <ReferenceLine y={75} stroke="#22c55e" strokeDasharray="5 5" label={{ value: 'Meta 75%', position: 'insideTopRight', fontSize: 11 }} />
-                <Line type="monotone" dataKey="indice" stroke="#10b981" strokeWidth={3} dot={{ r: 4 }} name="Flexibilidade" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
-        <section className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-900">9) Dias perdidos por absenteísmo (CID F/G/I)</h3>
-          <p className="text-xs text-slate-500 mb-4">Impacto mensal consolidado para visão gerencial e negociação com cliente.</p>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={lostDaysData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="cidF" stackId="lost" fill="#a855f7" name="CID F" />
-                <Bar dataKey="cidG" stackId="lost" fill="#3b82f6" name="CID G" />
-                <Bar dataKey="cidI" stackId="lost" fill="#14b8a6" name="CID I" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <p className="text-xs text-slate-600 mt-2">Total no semestre: <span className="font-bold text-slate-900">{totalLostDays} dias perdidos</span>.</p>
-        </section>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <article className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm lg:col-span-2">
-          <h3 className="font-bold text-slate-900 mb-2">10) Campanhas anuais e governança de conteúdo</h3>
-          <p className="text-xs text-slate-500 mb-4">
-            Painel para as 12 campanhas fixas do ano (Setembro Amarelo, Outubro Rosa, Novembro Azul etc.) com status de publicação.
-          </p>
-          <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={campaignData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="item" width={120} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(value) => [`${value}%`, 'Progresso']} />
-                <Bar dataKey="progresso" fill="#14b8a6" radius={[0, 8, 8, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </article>
-
-        <article className="bg-slate-900 text-white rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold mb-3">Fluxo operacional mensal</h3>
-          <ul className="space-y-3 text-sm">
-            <li className="flex gap-2"><ClipboardList size={16} className="mt-0.5 text-indigo-300" /> Entrada até dia 10: profissionais lançam dados direto no sistema.</li>
-            <li className="flex gap-2"><Activity size={16} className="mt-0.5 text-indigo-300" /> Processamento automático de gráficos e comparativos por setor.</li>
-            <li className="flex gap-2"><Eye size={16} className="mt-0.5 text-indigo-300" /> Portal cliente com acesso somente leitura para engenharia/RH.</li>
-            <li className="flex gap-2"><ShieldAlert size={16} className="mt-0.5 text-indigo-300" /> Evidência visual obrigatória para auditoria (fotos antes/depois).</li>
-            <li className="flex gap-2"><Stethoscope size={16} className="mt-0.5 text-indigo-300" /> Embrião NR1: perguntas leves de psicossocial para mapeamento inicial.</li>
-            <li className="flex gap-2"><TrendingUp size={16} className="mt-0.5 text-indigo-300" /> Meta crítica: manter adesão &gt;80% e reduzir queixas ano a ano.</li>
-          </ul>
-        </article>
-      </div>
+          <section className="space-y-4">
+            {!selectedWidgets.length && <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-500 text-sm">Nenhum componente selecionado. Marque widgets à esquerda.</div>}
+            {selectedWidgets.map((id) => (
+              <article key={id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                <h4 className="font-bold text-slate-900 mb-3">{widgetCatalog.find((w) => w.id === id)?.title}</h4>
+                {renderWidget(id)}
+              </article>
+            ))}
+          </section>
+        </div>
+      )}
     </div>
   );
 };
