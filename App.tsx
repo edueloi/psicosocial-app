@@ -12,6 +12,8 @@ import UsersModule from './components/UsersModule';
 import UnitsModule from './components/UnitsModule';
 import AuditReadiness from './components/AuditReadiness';
 import ComplianceTimeline from './components/ComplianceTimeline';
+import FormsCenter from './components/FormsCenter';
+import OperationsHub from './components/OperationsHub';
 import { AppDataProvider } from './appData';
 
 const App: React.FC = () => {
@@ -70,6 +72,8 @@ const App: React.FC = () => {
       case 'units': return <UnitsModule />;
       case 'audit': return <AuditReadiness />;
       case 'timeline': return <ComplianceTimeline />;
+      case 'forms': return <FormsCenter />;
+      case 'operations': return <OperationsHub />;
       default: return <div className="p-10 text-center text-slate-400">Em desenvolvimento: {activeTab}</div>;
     }
   };
