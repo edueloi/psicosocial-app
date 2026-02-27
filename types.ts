@@ -175,3 +175,30 @@ export interface Unit {
 }
 
 
+
+export type AppModuleId = 'dashboard' | 'inventory' | 'actions' | 'psychosocial' | 'audit' | 'timeline' | 'users' | 'units' | 'forms' | 'operations' | 'reports';
+
+export interface ModulePermissions {
+  view: boolean;
+  create: boolean;
+  edit: boolean;
+  delete: boolean;
+  export: boolean;
+}
+
+export interface UserPreferences {
+  language: 'pt-BR' | 'en-US' | 'es-ES';
+  timezone: string;
+  digestFrequency: 'daily' | 'weekly' | 'monthly';
+  emailAlerts: boolean;
+  pushAlerts: boolean;
+}
+
+export interface UserProfileSettings {
+  fullName: string;
+  email: string;
+  phone: string;
+  roleTitle: string;
+  department: string;
+  bio: string;
+}

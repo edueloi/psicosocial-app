@@ -1,7 +1,6 @@
-﻿
 import React, { useState } from 'react';
 import { MOCK_USERS, MOCK_TENANTS } from './constants';
-import { User, Tenant } from './types';
+import { AppModuleId, ModulePermissions, User, Tenant, UserPreferences, UserProfileSettings } from './types';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
@@ -12,13 +11,80 @@ import UsersModule from './components/UsersModule';
 import UnitsModule from './components/UnitsModule';
 import AuditReadiness from './components/AuditReadiness';
 import ComplianceTimeline from './components/ComplianceTimeline';
+import FormsCenter from './components/FormsCenter';
+import OperationsHub from './components/OperationsHub';
 import { AppDataProvider } from './appData';
+
+const SETTINGS_STORAGE_KEY = 'settings-profile-v2';
+
+const defaultPermissions = (): Record<AppModuleId, ModulePermissions> => ({
+  dashboard: { view: true, create: false, edit: false, delete: false, export: true },
+  inventory: { view: true, create: true, edit: true, delete: true, export: true },
+  actions: { view: true, create: true, edit: true, delete: true, export: true },
+  psychosocial: { view: true, create: true, edit: true, delete: false, export: true },
+  audit: { view: true, create: false, edit: false, delete: false, export: true },
+  timeline: { view: true, create: false, edit: false, delete: false, export: true },
+  users: { view: true, create: true, edit: true, delete: true, export: true },
+  units: { view: true, create: true, edit: true, delete: false, export: true },
+  forms: { view: true, create: true, edit: true, delete: true, export: true },
+  operations: { view: true, create: true, edit: true, delete: true, export: true },
+  reports: { view: true, create: false, edit: false, delete: false, export: true },
+});
+
+const defaultPreferences: UserPreferences = {
+  language: 'pt-BR',
+  timezone: 'America/Sao_Paulo',
+  digestFrequency: 'weekly',
+  emailAlerts: true,
+  pushAlerts: true,
+};
+
+const defaultProfile: UserProfileSettings = {
+  fullName: 'Admin Master',
+  email: 'admin@laboral.com',
+  phone: '+55 11 99999-9999',
+  roleTitle: 'Administrador do Tenant',
+  department: 'SST / Governança',
+  bio: 'Responsável por governança NR-01 e acompanhamento dos indicadores psicossociais.',
+};
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(MOCK_USERS[0]);
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(MOCK_TENANTS[0]);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState<AppModuleId>('dashboard');
   const [vision, setVision] = useState<'tech' | 'exec'>('tech');
+
+  const [preferences, setPreferences] = useState<UserPreferences>(() => {
+    if (typeof window === 'undefined') return defaultPreferences;
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return defaultPreferences;
+      const parsed = JSON.parse(raw);
+      return { ...defaultPreferences, ...parsed.preferences };
+    } catch { return defaultPreferences; }
+  });
+  const [profile, setProfile] = useState<UserProfileSettings>(() => {
+    if (typeof window === 'undefined') return defaultProfile;
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return defaultProfile;
+      const parsed = JSON.parse(raw);
+      return { ...defaultProfile, ...parsed.profile };
+    } catch { return defaultProfile; }
+  });
+  const [permissions, setPermissions] = useState<Record<AppModuleId, ModulePermissions>>(() => {
+    if (typeof window === 'undefined') return defaultPermissions();
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return defaultPermissions();
+      const parsed = JSON.parse(raw);
+      return { ...defaultPermissions(), ...parsed.permissions };
+    } catch { return defaultPermissions(); }
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ preferences, profile, permissions }));
+  }, [preferences, profile, permissions]);
 
   const logout = () => {
     setCurrentUser(null);
@@ -32,24 +98,19 @@ const App: React.FC = () => {
   };
 
   if (!currentUser) {
+    const l = preferences.language;
+    const title = l === 'en-US' ? 'Select a demo user' : l === 'es-ES' ? 'Selecciona un usuario de demostración' : 'Selecione um usuário para demonstração';
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-indigo-600 mb-2">NR01-Master</h1>
-            <p className="text-slate-500">Selecione um usuário para demonstração</p>
+            <p className="text-slate-500">{title}</p>
           </div>
           <div className="space-y-4">
             {MOCK_USERS.map(u => (
-              <button
-                key={u.id}
-                onClick={() => handleLogin(u)}
-                className="w-full flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all group"
-              >
-                <div className="text-left">
-                  <p className="font-semibold text-slate-800">{u.name}</p>
-                  <p className="text-xs text-slate-500 uppercase tracking-wider">{u.role}</p>
-                </div>
+              <button key={u.id} onClick={() => handleLogin(u)} className="w-full flex items-center justify-between p-4 border border-slate-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all group">
+                <div className="text-left"><p className="font-semibold text-slate-800">{u.name}</p><p className="text-xs text-slate-500 uppercase tracking-wider">{u.role}</p></div>
                 <div className="text-indigo-600 font-medium group-hover:translate-x-1 transition-transform">Entrar →</div>
               </button>
             ))}
@@ -59,7 +120,10 @@ const App: React.FC = () => {
     );
   }
 
+  const noAccessMessage = preferences.language === 'en-US' ? 'You do not have permission to view this module.' : preferences.language === 'es-ES' ? 'No tienes permiso para ver este módulo.' : 'Você não tem permissão para visualizar este módulo.';
   const renderContent = () => {
+    if (!permissions[activeTab]?.view) return <div className="p-10 text-center text-rose-500 font-semibold">{noAccessMessage}</div>;
+
     switch (activeTab) {
       case 'dashboard': return <Dashboard vision={vision} />;
       case 'inventory': return <Inventory vision={vision} />;
@@ -70,20 +134,28 @@ const App: React.FC = () => {
       case 'units': return <UnitsModule />;
       case 'audit': return <AuditReadiness />;
       case 'timeline': return <ComplianceTimeline />;
+      case 'forms': return <FormsCenter />;
+      case 'operations': return <OperationsHub />;
       default: return <div className="p-10 text-center text-slate-400">Em desenvolvimento: {activeTab}</div>;
     }
   };
 
   return (
-    <AppDataProvider onNavigate={setActiveTab}>
-      <Layout 
-        currentUser={currentUser} 
-        currentTenant={currentTenant} 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab}
+    <AppDataProvider onNavigate={(tab) => setActiveTab(tab as AppModuleId)}>
+      <Layout
+        currentUser={currentUser}
+        currentTenant={currentTenant}
+        activeTab={activeTab}
+        setActiveTab={(tab) => setActiveTab(tab as AppModuleId)}
         onLogout={logout}
         vision={vision}
         setVision={setVision}
+        preferences={preferences}
+        setPreferences={setPreferences}
+        profile={profile}
+        setProfile={setProfile}
+        permissions={permissions}
+        setPermissions={setPermissions}
       >
         {renderContent()}
       </Layout>
@@ -92,5 +164,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
-
