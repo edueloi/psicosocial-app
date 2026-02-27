@@ -180,6 +180,60 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const [preferences, setPreferences] = useState<UserPreferences>(() => {
+    if (typeof window === 'undefined') return defaultPreferences;
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return defaultPreferences;
+      const parsed = JSON.parse(raw);
+      return { ...defaultPreferences, ...parsed.preferences };
+    } catch { return defaultPreferences; }
+  });
+
+  const [profile, setProfile] = useState<UserProfileSettings>(() => {
+    if (typeof window === 'undefined') return defaultProfile;
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return defaultProfile;
+      const parsed = JSON.parse(raw);
+      return { ...defaultProfile, ...parsed.profile };
+    } catch { return defaultProfile; }
+  });
+
+  const [permissionProfiles, setPermissionProfiles] = useState<PermissionProfile[]>(() => {
+    if (typeof window === 'undefined') return defaultPermissionProfiles();
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return defaultPermissionProfiles();
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed.permissionProfiles) && parsed.permissionProfiles.length
+        ? parsed.permissionProfiles
+        : defaultPermissionProfiles();
+    } catch { return defaultPermissionProfiles(); }
+  });
+
+  const [selectedPermissionProfileId, setSelectedPermissionProfileId] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'pf-admin';
+    try {
+      const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (!raw) return 'pf-admin';
+      const parsed = JSON.parse(raw);
+      return parsed.selectedPermissionProfileId || 'pf-admin';
+    } catch { return 'pf-admin'; }
+  });
+
+  const activePermissionProfile = permissionProfiles.find(p => p.id === selectedPermissionProfileId) || permissionProfiles[0];
+  const activePermissions = activePermissionProfile?.permissions || defaultPermissions();
+
+  React.useEffect(() => {
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
+      preferences,
+      profile,
+      permissionProfiles,
+      selectedPermissionProfileId,
+    }));
+  }, [preferences, profile, permissionProfiles, selectedPermissionProfileId]);
+
   const logout = () => {
     setCurrentUser(null);
     setCurrentTenant(null);
