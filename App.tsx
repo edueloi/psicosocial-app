@@ -385,7 +385,7 @@ const App: React.FC = () => {
       case 'timeline': return <ComplianceTimeline />;
       case 'forms': return <FormsCenter />;
       case 'operations': return <OperationsHub />;
-      case 'documents': return <DocumentsModule currentUser={currentUser} clientCompanies={clientCompanies} />;
+      case 'documents': return <DocumentsModule currentUser={currentUser} clientCompanies={clientCompanies} permissionProfiles={permissionProfiles} />;
       case 'manual': return <SystemManual permissions={activePermissions} language={preferences.language} />;
       default: return <div className="p-10 text-center text-slate-400">Em desenvolvimento: {activeTab}</div>;
     }
