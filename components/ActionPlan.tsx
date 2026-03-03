@@ -358,23 +358,6 @@ const ActionPlan: React.FC = () => {
         </select>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 lg:grid-cols-[1fr_220px_220px] gap-3">
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Buscar por ação, risco, empresa ou área" className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm" />
-        </div>
-        <select value={companyFilter} onChange={(e) => setCompanyFilter(e.target.value)} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold bg-slate-50">
-          <option value="all">Empresa: todas</option>
-          {COMPANY_OPTIONS.map((company) => <option key={company.id} value={company.id}>{company.name}</option>)}
-        </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as 'all' | ActionStatus)} className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold bg-slate-50">
-          <option value="all">Status: todos</option>
-          <option value={ActionStatus.PENDING}>Pendente</option>
-          <option value={ActionStatus.IN_PROGRESS}>Em andamento</option>
-          <option value={ActionStatus.COMPLETED}>Concluído</option>
-        </select>
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, i) => <div key={i} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4"><div className={`w-11 h-11 rounded-xl bg-slate-50 ${stat.color} flex items-center justify-center shrink-0`}>{stat.icon}</div><div><p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-0.5">{stat.label}</p><p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p></div></div>)}
       </div>
