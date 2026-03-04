@@ -4,7 +4,7 @@
 
 # Psicosocial App
 
-Aplicacao React + Vite para gestao psicossocial e ocupacional, agora com backend Express no mesmo repositorio.
+Aplicacao React + Vite para gestao psicossocial e ocupacional, com backend Express + SQLite no mesmo repositorio.
 
 ## Pre-requisitos
 
@@ -22,7 +22,9 @@ Aplicacao React + Vite para gestao psicossocial e ocupacional, agora com backend
 2. Instale as dependencias do backend:
 
    ```bash
-   npm --prefix backend install
+   cd backend
+   npm install
+   cd ..
    ```
 
 3. Inicie front e back juntos:
@@ -33,7 +35,20 @@ Aplicacao React + Vite para gestao psicossocial e ocupacional, agora com backend
 
 4. Front-end: `http://localhost:3030`
 5. Back-end: `http://localhost:3001`
-6. Health check: `http://localhost:3001/api/health`
+
+## SQLite
+
+- Banco: `backend/data/psicosocial.sqlite`
+- O schema e o seed inicial de riscos/plano de acao sao criados automaticamente no start do backend.
+
+## Endpoints de Gestao de Riscos
+
+- `GET /api/health`
+- `GET /api/risk-management/summary`
+- `GET /api/risk-management/risks`
+- `POST /api/risk-management/risks`
+- `GET /api/risk-management/actions`
+- `POST /api/risk-management/actions`
 
 ## Scripts disponiveis
 
