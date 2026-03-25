@@ -1,55 +1,29 @@
 # Psicosocial App
 
-Aplicacao React + Vite para gestao psicossocial e ocupacional, com backend Express + SQLite no mesmo repositorio.
+Aplicação full stack para gestão psicossocial e ocupacional, desenvolvida com **React + Vite** no front-end e **Express + SQLite** no back-end, tudo no mesmo repositório.
 
-## Pre-requisitos
+## Tecnologias utilizadas
 
-- Node.js 18+
-- npm 9+
+### Front-end
+- React
+- Vite
 
-## Executar localmente (Full Stack)
+### Back-end
+- Express
+- SQLite
 
-1. Instale as dependencias do front-end:
+## Pré-requisitos
 
-   ```bash
-   npm install
-   ```
+Antes de iniciar, garanta que você tenha instalado:
 
-2. Instale as dependencias do backend:
+- **Node.js** 18 ou superior
+- **npm** 9 ou superior
 
-   ```bash
-   cd backend
-   npm install
-   cd ..
-   ```
+## Como executar o projeto localmente
 
-3. Inicie front e back juntos:
+### 1. Instalar as dependências do front-end
 
-   ```bash
-   npm run dev
-   ```
+Na raiz do projeto, execute:
 
-4. Front-end: `http://localhost:3030`
-5. Back-end: `http://localhost:3001`
-
-## SQLite
-
-- Banco: `backend/data/psicosocial.sqlite`
-- O schema e o seed inicial de riscos/plano de acao sao criados automaticamente no start do backend.
-
-## Endpoints de Gestao de Riscos
-
-- `GET /api/health`
-- `GET /api/risk-management/summary`
-- `GET /api/risk-management/risks`
-- `POST /api/risk-management/risks`
-- `GET /api/risk-management/actions`
-- `POST /api/risk-management/actions`
-
-## Scripts disponiveis
-
-- `npm run dev`: inicia frontend e backend em paralelo.
-- `npm run dev:front`: inicia apenas o frontend.
-- `npm run dev:back`: inicia apenas o backend.
-- `npm run build`: gera a versao de producao do frontend em `dist/`.
-- `npm run preview`: serve localmente o build de producao.
+```bash
+npm install
